@@ -33,13 +33,13 @@ importers:
   packages/daisyui:
     dependencies:
       '@sigx/reactivity':
-        specifier: ^0.4.0
+        specifier: ^0.4.3
         version: 0.4.3
       '@sigx/runtime-core':
-        specifier: ^0.4.0
+        specifier: ^0.4.3
         version: 0.4.3
       '@sigx/runtime-dom':
-        specifier: ^0.4.0
+        specifier: ^0.4.3
         version: 0.4.3
       daisyui:
         specifier: '>=5.0.0'

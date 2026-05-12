@@ -1,6 +1,6 @@
 {
     "name": "@sigx/daisyui",
-    "version": "0.4.0",
+    "version": "0.4.1",
     "description": "DaisyUI component library for SignalX — beautiful, accessible UI components with full theme support",
     "type": "module",
     "main": "./dist/index.js",
@@ -76,14 +76,14 @@
         "url": "https://github.com/signalxjs/daisyui/issues"
     },
     "peerDependencies": {
-        "sigx": ">=0.4.0",
+        "sigx": ">=0.4.3",
         "daisyui": ">=5.0.0",
         "tailwindcss": ">=4.0.0"
     },
     "dependencies": {
-        "@sigx/reactivity": "^0.4.0",
-        "@sigx/runtime-core": "^0.4.0",
-        "@sigx/runtime-dom": "^0.4.0"
+        "@sigx/reactivity": "^0.4.3",
+        "@sigx/runtime-core": "^0.4.3",
+        "@sigx/runtime-dom": "^0.4.3"
     },
     "devDependencies": {
         "@sigx/vite": "^0.4.3",
