@@ -25,7 +25,7 @@ export type DrawerProps =
  * </Drawer>
  * ```
  */
-export const Drawer = component<DrawerProps>(({ props, slots, emit }) => {
+export const Drawer = component<DrawerProps>(({ props, slots }) => {
     const drawerId = `drawer-${Math.random().toString(36).slice(2)}`;
 
     const handleCheckboxChange = (e: Event) => {

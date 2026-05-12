@@ -45,12 +45,6 @@ const MenuItem = component<MenuItemProps>(({ props, slots }) => {
         return classes.join(' ') || undefined;
     };
 
-    const getAnchorClasses = () => {
-        const classes: string[] = [];
-        if (props.active) classes.push('active');
-        return classes.join(' ') || undefined;
-    };
-
     return () => (
         <li class={getClasses()} data-value={props.value}>
             {slots.default?.()}

@@ -1,4 +1,4 @@
-import { component, compound, type Define } from 'sigx';
+import { component, type Define } from 'sigx';
 
 // ============================================
 // Mockup Types
