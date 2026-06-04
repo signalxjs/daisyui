@@ -35,6 +35,14 @@ export type MenuItemProps =
     & Define.Prop<'active', boolean, false>
     & Define.Prop<'submenu', boolean, false>
     & Define.Prop<'disabled', boolean, false>
+    // Render the item as a real link (`<a href>`), with `menu-active` applied
+    // automatically. Use this for plain navigation.
+    & Define.Prop<'href', string, false>
+    // Don't wrap the slot in an `<a>` — render it directly under the `<li>` so
+    // the caller can supply their own interactive element (a router `<Link>`,
+    // `<button>`, etc.) without nesting interactive elements. With `asChild` the
+    // caller owns the active styling (add `menu-active` to their element).
+    & Define.Prop<'asChild', boolean, false>
     & Define.Prop<'class', string, false>
     & Define.Slot<'default'>;
 
@@ -57,16 +65,22 @@ const useMenuContext = defineInjectable<MenuContext | null>(() => null);
 /**
  * Menu item sub-component for use inside Menu.
  *
- * Leaf items wrap their content in an `<a>` — the <li>'s direct child — so it
- * receives daisyUI's menu-item styling (padding, hover) and can carry the
- * `menu-active` class. Active state comes from the `active` prop, or from the
- * parent Menu's `model` matching this item's `value`. For nested menus, pass
- * `submenu` and provide a `<details>` so the slot renders directly under the
- * `<li>` (where daisyUI expects it) instead of being wrapped.
+ * By default a leaf item wraps its content in an `<a>` — the <li>'s direct
+ * child — so it receives daisyUI's menu-item styling (padding, hover) and can
+ * carry the `menu-active` class. Active state comes from the `active` prop, or
+ * from the parent Menu's `model` matching this item's `value`.
+ *
+ * To render a real link, pass `href` (the item becomes `<a href>` and still
+ * auto-applies `menu-active`). To supply your own interactive element (a router
+ * `<Link>`, a `<button>`, …) without nesting interactive elements, pass
+ * `asChild` so the slot renders directly under the `<li>`. For nested menus,
+ * pass `submenu` and provide a `<details>`.
  *
  * @example
  * ```tsx
- * <Menu.Item value="home">Home</Menu.Item>
+ * <Menu.Item value="home">Home</Menu.Item>                  // wrapped <a>
+ * <Menu.Item value="docs" href="/docs">Docs</Menu.Item>    // real link
+ * <Menu.Item asChild><RouterLink to="/about">About</RouterLink></Menu.Item>
  * <Menu.Item active>Selected</Menu.Item>
  * <Menu.Item disabled>Disabled</Menu.Item>
  * <Menu.Item submenu>
@@ -87,11 +101,20 @@ const MenuItem = component<MenuItemProps>(({ props, slots }) => {
     const isActive = () =>
         props.active ?? (props.value != null && menu?.activeValue() === props.value);
 
+    const renderContent = () => {
+        // `submenu`/`asChild`: caller owns the child element — render it directly
+        // under the <li> so we never nest interactive elements.
+        if (props.submenu || props.asChild) return slots.default?.();
+        const activeClass = isActive() ? 'menu-active' : undefined;
+        // `href`: render a real navigable link; otherwise a plain <a> for styling.
+        return props.href != null
+            ? <a href={props.href} class={activeClass}>{slots.default?.()}</a>
+            : <a class={activeClass}>{slots.default?.()}</a>;
+    };
+
     return () => (
         <li class={getClasses()} data-value={props.value}>
-            {props.submenu
-                ? slots.default?.()
-                : <a class={isActive() ? 'menu-active' : undefined}>{slots.default?.()}</a>}
+            {renderContent()}
         </li>
     );
 });
@@ -127,9 +150,9 @@ const MenuTitle = component<MenuTitleProps>(({ props, slots }) => {
  * ```tsx
  * <Menu model={() => activeItem} size="lg" background="base-200" rounded width="56">
  *     <Menu.Title>Navigation</Menu.Title>
- *     <Menu.Item value="home"><a>Home</a></Menu.Item>
- *     <Menu.Item value="about"><a>About</a></Menu.Item>
- *     <Menu.Item disabled><a>Disabled</a></Menu.Item>
+ *     <Menu.Item value="home">Home</Menu.Item>
+ *     <Menu.Item value="about" href="/about">About</Menu.Item>
+ *     <Menu.Item disabled>Disabled</Menu.Item>
  * </Menu>
  * ```
  */

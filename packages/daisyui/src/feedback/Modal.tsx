@@ -1,4 +1,4 @@
-import { component, compound, Portal, onMounted, effect, type Define } from 'sigx';
+import { component, compound, Portal, onMounted, onUnmounted, effect, type Define } from 'sigx';
 import { resolveBoxStyle, type BoxStyleProps } from '../shared/styles';
 
 // ============================================
@@ -57,6 +57,15 @@ const _Modal = component<ModalProps>(({ props, slots }) => {
         }
     };
 
+    // Non-modal dialogs opened with show() don't dismiss on Esc the way
+    // showModal() ones do, so emulate it for the backdrop={false} case.
+    const handleKeydown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape' && props.backdrop === false && props.model?.value) {
+            e.preventDefault();
+            close();
+        }
+    };
+
     onMounted(() => {
         effect(() => {
             if (!dialogRef) return;
@@ -65,11 +74,23 @@ const _Modal = component<ModalProps>(({ props, slots }) => {
             const isDialogOpen = dialogRef.open;
 
             if (isOpen && !isDialogOpen) {
-                dialogRef.showModal();
+                // backdrop={false} → open non-modally with show() so the rest of
+                // the page stays interactive (no top-layer / focus-trap). The
+                // default keeps showModal() for a blocking, Esc-closable dialog.
+                if (props.backdrop === false) {
+                    dialogRef.show();
+                } else {
+                    dialogRef.showModal();
+                }
             } else if (!isOpen && isDialogOpen) {
                 dialogRef.close();
             }
         });
+        document.addEventListener('keydown', handleKeydown);
+    });
+
+    onUnmounted(() => {
+        document.removeEventListener('keydown', handleKeydown);
     });
 
     return () => {
