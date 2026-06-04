@@ -454,6 +454,8 @@ const SidebarRadius = component<SidebarRadiusProps>(({ props }) => {
                                 <button
                                     type="button"
                                     title={`${r}rem`}
+                                    aria-label={`${item.label} radius ${r}rem`}
+                                    aria-pressed={Math.abs(item.value - r) < 0.01}
                                     class={`flex-1 aspect-square border-2 cursor-pointer transition-colors
                                         ${Math.abs(item.value - r) < 0.01
                                             ? 'border-primary bg-primary/10'
