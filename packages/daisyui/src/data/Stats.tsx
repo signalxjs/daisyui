@@ -1,4 +1,5 @@
 import { component, compound, type Define } from 'sigx';
+import { resolveBoxStyle, type BoxStyleProps } from '../shared/styles';
 
 // ============================================
 // Stat Sub-Components
@@ -114,7 +115,7 @@ export type StatsProps =
     & Define.Prop<'vertical', boolean, false>
     & Define.Prop<'horizontal', boolean, false>
     & Define.Prop<'shadow', boolean, false>
-    & Define.Prop<'class', string, false>
+    & BoxStyleProps
     & Define.Slot<'default'>;
 
 const _Stats = component<StatsProps>(({ props, slots }) => {
@@ -123,15 +124,19 @@ const _Stats = component<StatsProps>(({ props, slots }) => {
         if (props.vertical) classes.push('stats-vertical');
         if (props.horizontal) classes.push('stats-horizontal');
         if (props.shadow) classes.push('shadow');
-        if (props.class) classes.push(props.class);
-        return classes.join(' ');
+        const box = resolveBoxStyle(props);
+        if (box.className) classes.push(box.className);
+        return { className: classes.join(' '), style: box.style };
     };
 
-    return () => (
-        <div class={getClasses()}>
-            {slots.default?.()}
-        </div>
-    );
+    return () => {
+        const { className, style } = getClasses();
+        return (
+            <div class={className} style={style}>
+                {slots.default?.()}
+            </div>
+        );
+    };
 });
 
 export const Stats = compound(_Stats, {

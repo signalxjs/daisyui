@@ -74,15 +74,22 @@ export function resolveSpacing(
 // Border Radius
 // ============================================================================
 
-/** Border radius values */
-export type RadiusValue = 'none' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | 'full' | 'box';
+/**
+ * Border radius values. `box` / `field` / `selector` are the theme-derived
+ * daisyUI radii (`--radius-box` for cards/modals/panels, `--radius-field` for
+ * buttons/inputs/tabs/menu-items, `--radius-selector` for checkboxes/toggles/
+ * badges) — they track the active theme. The `sm`..`3xl`/`full` scale is fixed.
+ */
+export type RadiusValue =
+    | 'none' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | 'full'
+    | 'box' | 'field' | 'selector';
 
-/** Resolves radius to Tailwind class */
+/** Resolves radius to Tailwind class. Boolean `true` → the theme box radius. */
 export function resolveRadius(value: RadiusValue | boolean | undefined): string | undefined {
     if (value === undefined) return undefined;
     if (value === true) return 'rounded-box';
     if (value === false) return undefined;
-    
+
     const radiusMap: Record<RadiusValue, string> = {
         'none': 'rounded-none',
         'sm': 'rounded-sm',
@@ -93,8 +100,10 @@ export function resolveRadius(value: RadiusValue | boolean | undefined): string 
         '3xl': 'rounded-3xl',
         'full': 'rounded-full',
         'box': 'rounded-box',
+        'field': 'rounded-field',
+        'selector': 'rounded-selector',
     };
-    
+
     return radiusMap[value];
 }
 
@@ -108,21 +117,35 @@ export type TailwindSizeValue =
     | 'auto' | 'full' | 'screen' | 'min' | 'max' | 'fit'
     | '1/2' | '1/3' | '2/3' | '1/4' | '2/4' | '3/4' | '1/5' | '2/5' | '3/5' | '4/5' | '1/6' | '5/6';
 
-/** 
- * Size value - can be a Tailwind preset or arbitrary CSS value.
- * 
+/**
+ * Explicit CSS size values that carry a unit, plus `calc()`/`var()`.
+ * Requiring a unit here is what makes a bare non-preset number (e.g. `"560"`)
+ * a type error — guiding callers to a preset or a unitful value.
+ */
+export type CssSize =
+    | `${number}px` | `${number}rem` | `${number}em` | `${number}ch`
+    | `${number}%` | `${number}vh` | `${number}vw` | `${number}vmin` | `${number}vmax`
+    | `${number}dvh` | `${number}dvw` | `${number}svh` | `${number}lvh`
+    | `calc(${string})` | `var(${string})`;
+
+/**
+ * Size value — a Tailwind step preset (autocompleted) or an explicit CSS value.
+ *
+ * Presets follow Tailwind's spacing scale where the number is the ×0.25rem step,
+ * NOT pixels: `width="56"` → `w-56` = 14rem (224px). For an absolute size, pass a
+ * unit: `width="560px"`, `width="50%"`, `width="calc(100% - 2rem)"`. A bare
+ * non-preset number like `"560"` is rejected by the type — add a unit or use a
+ * preset. For anything exotic, use the `class` escape hatch.
+ *
  * @example
- * // Tailwind presets
- * width="48"      // w-48 (12rem)
- * width="full"    // w-full (100%)
- * width="1/2"     // w-1/2 (50%)
- * 
- * // Arbitrary CSS values (applied as inline styles)
- * width="400px"   // style="width: 400px"
- * width="70%"     // style="width: 70%"
+ * width="48"                 // w-48 (12rem) — Tailwind step
+ * width="full"               // w-full (100%)
+ * width="1/2"                // w-1/2 (50%)
+ * width="560px"              // style="width: 560px"
+ * width="70%"                // style="width: 70%"
  * width="calc(100% - 2rem)"  // style="width: calc(100% - 2rem)"
  */
-export type SizeValue = TailwindSizeValue | (string & {});
+export type SizeValue = TailwindSizeValue | CssSize;
 
 /** Set of valid Tailwind size presets for quick lookup */
 const tailwindSizes = new Set<string>([
@@ -153,18 +176,22 @@ export type SizeResult = {
  */
 export function resolveSize(value: SizeValue | undefined, prefix: 'w' | 'h' | 'min-w' | 'min-h' | 'max-w' | 'max-h'): SizeResult {
     if (!value) return {};
-    
+
     // Check if it's a predefined Tailwind value
     if (tailwindSizes.has(value)) {
         return { class: `${prefix}-${value}` };
     }
-    
-    // Otherwise, treat as arbitrary CSS value - use inline style
-    return { 
-        style: { 
-            property: sizeCssProps[prefix], 
-            value 
-        } 
+
+    // Safety net for untyped (JS) callers: a bare number isn't valid CSS without
+    // a unit, so coerce to px rather than emitting an ignored `width: 560`.
+    const cssValue = /^-?\d+(\.\d+)?$/.test(value) ? `${value}px` : value;
+
+    // Otherwise, treat as an explicit CSS value - use inline style
+    return {
+        style: {
+            property: sizeCssProps[prefix],
+            value: cssValue
+        }
     };
 }
 
@@ -228,10 +255,79 @@ export function resolveStyleProps(props: {
     if (radiusClass) classes.push(radiusClass);
     
     classes.push(...resolveBackground(props.background));
-    
+
     if (props.class) classes.push(props.class);
-    
+
     return classes;
+}
+
+/**
+ * Container styling props (theme-aware) to mix into panel/container components
+ * so consumers set chrome via props instead of hand-written utility classes.
+ * Adds `width` to `StyleProps` and resolves to a className + optional inline
+ * style (width can be a class or, for unitful values, an inline style).
+ */
+export type BoxStyleProps =
+    & Define.Prop<'padding', Spacing, false>
+    & Define.Prop<'margin', Spacing, false>
+    & Define.Prop<'rounded', RadiusValue | boolean, false>
+    & Define.Prop<'background', BackgroundColor, false>
+    & Define.Prop<'width', SizeValue, false>
+    & Define.Prop<'height', SizeValue, false>
+    & Define.Prop<'class', string, false>;
+
+/** Result of resolving container styling props. */
+export type BoxStyleResult = { className: string; style?: Record<string, string> };
+
+/**
+ * Resolves the common container styling props to a className + optional inline
+ * style. The returned className contains only the resolved prop classes; compose
+ * it with the component's own base classes (e.g. `['card', box.className]`).
+ */
+export function resolveBoxStyle(props: {
+    padding?: Spacing;
+    margin?: Spacing;
+    rounded?: RadiusValue | boolean;
+    background?: BackgroundColor;
+    width?: SizeValue;
+    height?: SizeValue;
+    minWidth?: SizeValue;
+    minHeight?: SizeValue;
+    maxWidth?: SizeValue;
+    maxHeight?: SizeValue;
+    class?: string;
+}): BoxStyleResult {
+    const classes: string[] = [];
+    const style: Record<string, string> = {};
+
+    classes.push(...resolveSpacing(props.padding, 'p'));
+    classes.push(...resolveSpacing(props.margin, 'm'));
+
+    const radiusClass = resolveRadius(props.rounded);
+    if (radiusClass) classes.push(radiusClass);
+
+    classes.push(...resolveBackground(props.background));
+
+    const sizeProps: Array<[SizeValue | undefined, 'w' | 'h' | 'min-w' | 'min-h' | 'max-w' | 'max-h']> = [
+        [props.width, 'w'],
+        [props.height, 'h'],
+        [props.minWidth, 'min-w'],
+        [props.minHeight, 'min-h'],
+        [props.maxWidth, 'max-w'],
+        [props.maxHeight, 'max-h'],
+    ];
+    for (const [value, prefix] of sizeProps) {
+        const result = resolveSize(value, prefix);
+        if (result.class) classes.push(result.class);
+        if (result.style) style[result.style.property] = result.style.value;
+    }
+
+    if (props.class) classes.push(props.class);
+
+    return {
+        className: classes.join(' '),
+        style: Object.keys(style).length > 0 ? style : undefined,
+    };
 }
 
 // ============================================================================

@@ -1,10 +1,22 @@
 import { component, type Define } from 'sigx';
+import {
+    resolveBoxStyle,
+    type Spacing,
+    type RadiusValue,
+    type BackgroundColor,
+    type SizeValue,
+} from '../shared/styles';
 
-export type DrawerProps = 
+export type DrawerProps =
     & Define.Model<boolean>
     & Define.Prop<'side', 'left' | 'right', false>
     & Define.Prop<'responsive', boolean, false>
-    & Define.Prop<'class', string, false>
+    // Styling props apply to the drawer side panel (`.drawer-side`).
+    & Define.Prop<'background', BackgroundColor, false>
+    & Define.Prop<'rounded', RadiusValue | boolean, false>
+    & Define.Prop<'width', SizeValue, false>
+    & Define.Prop<'padding', Spacing, false>
+    & Define.Prop<'class', string, false>       // applied to the drawer root
     & Define.Slot<'default'>
     & Define.Slot<'side'>;
 
@@ -39,27 +51,34 @@ export const Drawer = component<DrawerProps>(({ props, slots }) => {
         if (props.responsive) classes.push('lg:drawer-open');
         if (props.class) classes.push(props.class);
 
-        // Determine drawer side classes - add z-index for proper layering
+        // Determine drawer side classes - add z-index for proper layering.
+        // Styling props (background/rounded/width/padding) attach to the panel.
+        // DaisyUI CSS handles visibility via :checked ~ .drawer-side
+        const sidePanel = resolveBoxStyle({
+            background: props.background,
+            rounded: props.rounded,
+            width: props.width,
+            padding: props.padding,
+        });
         const drawerSideClasses = ['drawer-side', 'z-[999]'];
-        // If not responsive, we need the drawer-side to respect the toggle
-        // The DaisyUI CSS handles visibility via :checked ~ .drawer-side
+        if (sidePanel.className) drawerSideClasses.push(sidePanel.className);
 
         return (
             <div class={classes.join(' ')}>
-                <input 
-                    id={drawerId} 
-                    type="checkbox" 
-                    class="drawer-toggle" 
+                <input
+                    id={drawerId}
+                    type="checkbox"
+                    class="drawer-toggle"
                     checked={props.model?.value ?? false}
                     onChange={handleCheckboxChange}
                 />
                 <div class="drawer-content">
                     {slots.default?.()}
                 </div>
-                <div class={drawerSideClasses.join(' ')}>
-                    <label 
-                        htmlFor={drawerId} 
-                        aria-label="close sidebar" 
+                <div class={drawerSideClasses.join(' ')} style={sidePanel.style}>
+                    <label
+                        htmlFor={drawerId}
+                        aria-label="close sidebar"
                         class="drawer-overlay"
                     ></label>
                     {slots.side?.()}

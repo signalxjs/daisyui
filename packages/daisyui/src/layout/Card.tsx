@@ -1,15 +1,17 @@
 import { component, compound, type Define } from 'sigx';
+import { resolveBoxStyle, type BoxStyleProps } from '../shared/styles';
 
 export type CardVariant = 'normal' | 'compact' | 'side' | 'bordered' | 'image-full';
 
-export type CardProps = 
+export type CardProps =
     & Define.Prop<'variant', CardVariant, false>
     & Define.Prop<'shadow', boolean | 'sm' | 'md' | 'lg' | 'xl', false>
     & Define.Prop<'bordered', boolean, false>
     & Define.Prop<'glass', boolean, false>
     & Define.Prop<'imageFull', boolean, false>
+    /** @deprecated raw bg class — prefer the theme-aware `background` prop */
     & Define.Prop<'bgColor', string, false>
-    & Define.Prop<'class', string, false>
+    & BoxStyleProps
     & Define.Slot<'default'>;
 
 /**
@@ -31,10 +33,11 @@ export type CardProps =
 const _Card = component<CardProps>(({ props, slots }) => {
     const getClasses = () => {
         const classes = ['card'];
-        
-        // Background - default to base-100
-        classes.push(props.bgColor ?? 'bg-base-100');
-        
+
+        // Background: theme-aware `background` prop (resolved below) wins; else
+        // legacy `bgColor` raw class; else the daisyUI default.
+        if (!props.background) classes.push(props.bgColor ?? 'bg-base-100');
+
         // Shadow
         if (props.shadow === true || props.shadow === undefined) {
             classes.push('shadow-xl');
@@ -45,24 +48,28 @@ const _Card = component<CardProps>(({ props, slots }) => {
         } else if (props.shadow === 'lg') {
             classes.push('shadow-lg');
         }
-        
+
         // Variants
         if (props.variant === 'compact') classes.push('card-compact');
         if (props.variant === 'side') classes.push('card-side');
         if (props.bordered) classes.push('card-bordered');
         if (props.glass) classes.push('glass');
         if (props.imageFull) classes.push('image-full');
-        
-        if (props.class) classes.push(props.class);
-        
-        return classes.join(' ');
+
+        const box = resolveBoxStyle(props);
+        if (box.className) classes.push(box.className);
+
+        return { className: classes.join(' '), style: box.style };
     };
 
-    return () => (
-        <div class={getClasses()}>
-            {slots.default?.()}
-        </div>
-    );
+    return () => {
+        const { className, style } = getClasses();
+        return (
+            <div class={className} style={style}>
+                {slots.default?.()}
+            </div>
+        );
+    };
 });
 
 // Card Body

@@ -1,7 +1,8 @@
 import { component, type Define } from 'sigx';
+import { resolveBoxStyle, type BoxStyleProps } from '../shared/styles';
 
-export type NavbarProps = 
-    & Define.Prop<'class', string, false>
+export type NavbarProps =
+    & BoxStyleProps
     & Define.Slot<'start'>
     & Define.Slot<'center'>
     & Define.Slot<'end'>;
@@ -21,16 +22,22 @@ export type NavbarProps =
  */
 export const Navbar = component<NavbarProps>(({ props, slots }) => {
     const getClasses = () => {
-        const classes = ['navbar', 'bg-base-100'];
-        if (props.class) classes.push(props.class);
-        return classes.join(' ');
+        const classes = ['navbar'];
+        // daisyUI default background, overridable via the `background` prop.
+        if (!props.background) classes.push('bg-base-100');
+        const box = resolveBoxStyle(props);
+        if (box.className) classes.push(box.className);
+        return { className: classes.join(' '), style: box.style };
     };
 
-    return () => (
-        <div class={getClasses()}>
-            {slots.start && <div class="navbar-start">{slots.start()}</div>}
-            {slots.center && <div class="navbar-center">{slots.center()}</div>}
-            {slots.end && <div class="navbar-end">{slots.end()}</div>}
-        </div>
-    );
+    return () => {
+        const { className, style } = getClasses();
+        return (
+            <div class={className} style={style}>
+                {slots.start && <div class="navbar-start">{slots.start()}</div>}
+                {slots.center && <div class="navbar-center">{slots.center()}</div>}
+                {slots.end && <div class="navbar-end">{slots.end()}</div>}
+            </div>
+        );
+    };
 });

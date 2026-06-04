@@ -1,16 +1,14 @@
 import { component, type Define } from 'sigx';
-import { 
-    Spacing, 
-    RadiusValue, 
+import {
+    Spacing,
+    RadiusValue,
     BackgroundColor,
     SizeValue,
     FlexAlign,
     FlexJustify,
     FlexDirection,
     resolveSpacing,
-    resolveRadius,
-    resolveBackground,
-    resolveSize,
+    resolveBoxStyle,
     alignClasses,
     justifyClasses,
     directionClasses
@@ -65,60 +63,28 @@ export type FlexProps =
 export const Flex = component<FlexProps>(({ props, slots }) => {
     const getClassesAndStyles = () => {
         const classes = [props.inline ? 'inline-flex' : 'flex'];
-        const styles: Record<string, string> = {};
-        
+
         // Direction - default to row
         classes.push(directionClasses[props.direction ?? 'row']);
-        
+
         // Gap
         classes.push(...resolveSpacing(props.gap, 'gap'));
-        
+
         // Alignment
         if (props.align) {
             classes.push(alignClasses[props.align]);
         }
-        
+
         // Justify
         if (props.justify) {
             classes.push(justifyClasses[props.justify]);
         }
-        
+
         // Wrap
         if (props.wrap) {
             classes.push('flex-wrap');
         }
-        
-        // Padding & Margin
-        classes.push(...resolveSpacing(props.padding, 'p'));
-        classes.push(...resolveSpacing(props.margin, 'm'));
-        
-        // Width & Height - can be class or inline style
-        const sizeProps: Array<{ value: SizeValue | undefined; prefix: 'w' | 'h' | 'min-w' | 'min-h' | 'max-w' | 'max-h' }> = [
-            { value: props.width, prefix: 'w' },
-            { value: props.height, prefix: 'h' },
-            { value: props.minWidth, prefix: 'min-w' },
-            { value: props.minHeight, prefix: 'min-h' },
-            { value: props.maxWidth, prefix: 'max-w' },
-            { value: props.maxHeight, prefix: 'max-h' },
-        ];
-        
-        for (const { value, prefix } of sizeProps) {
-            const result = resolveSize(value, prefix);
-            if (result.class) {
-                classes.push(result.class);
-            }
-            if (result.style) {
-                styles[result.style.property] = result.style.value;
-            }
-        }
-        
-        // Rounded
-        const radiusClass = resolveRadius(props.rounded);
-        if (radiusClass) classes.push(radiusClass);
-        
-        // Background
-        classes.push(...resolveBackground(props.background));
-        
+
         // Flex grow/shrink
         if (props.grow) {
             classes.push('flex-grow');
@@ -126,12 +92,14 @@ export const Flex = component<FlexProps>(({ props, slots }) => {
         if (props.shrink) {
             classes.push('flex-shrink');
         }
-        
-        if (props.class) classes.push(props.class);
-        
-        return { 
+
+        // Shared box styling: padding/margin/rounded/background/size(+min/max)/class
+        const box = resolveBoxStyle(props);
+        if (box.className) classes.push(box.className);
+
+        return {
             className: classes.join(' '),
-            style: Object.keys(styles).length > 0 ? styles : undefined
+            style: box.style
         };
     };
 
