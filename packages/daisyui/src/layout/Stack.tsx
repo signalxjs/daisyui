@@ -1,10 +1,11 @@
 import { component, type Define } from 'sigx';
+import { resolveBoxStyle, type BoxStyleProps } from '../shared/styles';
 
 export type StackDirection = 'top' | 'bottom' | 'start' | 'end';
 
-export type StackProps = 
+export type StackProps =
     & Define.Prop<'direction', StackDirection, false>
-    & Define.Prop<'class', string, false>
+    & BoxStyleProps
     & Define.Slot<'default'>;
 
 /**
@@ -58,15 +59,19 @@ export const Stack = component<StackProps>(({ props, slots }) => {
             classes.push('stack-end');
         }
         // 'bottom' is default, no additional class needed (or stack-bottom)
-        
-        if (props.class) classes.push(props.class);
-        
-        return classes.join(' ');
+
+        const box = resolveBoxStyle(props);
+        if (box.className) classes.push(box.className);
+
+        return { className: classes.join(' '), style: box.style };
     };
 
-    return () => (
-        <div class={getClasses()}>
-            {slots.default?.()}
-        </div>
-    );
+    return () => {
+        const { className, style } = getClasses();
+        return (
+            <div class={className} style={style}>
+                {slots.default?.()}
+            </div>
+        );
+    };
 });

@@ -1,4 +1,5 @@
 import { component, compound, type Define } from 'sigx';
+import { resolveBoxStyle, type BoxStyleProps } from '../shared/styles';
 
 // ============================================
 // Join Types
@@ -7,7 +8,7 @@ import { component, compound, type Define } from 'sigx';
 export type JoinProps =
     & Define.Prop<'vertical', boolean, false>
     & Define.Prop<'horizontal', boolean, false>
-    & Define.Prop<'class', string, false>
+    & BoxStyleProps
     & Define.Slot<'default'>;
 
 export type JoinItemProps = 
@@ -42,15 +43,19 @@ const _Join = component<JoinProps>(({ props, slots }) => {
         const classes = ['join'];
         if (props.vertical) classes.push('join-vertical');
         if (props.horizontal) classes.push('join-horizontal');
-        if (props.class) classes.push(props.class);
-        return classes.join(' ');
+        const box = resolveBoxStyle(props);
+        if (box.className) classes.push(box.className);
+        return { className: classes.join(' '), style: box.style };
     };
 
-    return () => (
-        <div class={getClasses()}>
-            {slots.default?.()}
-        </div>
-    );
+    return () => {
+        const { className, style } = getClasses();
+        return (
+            <div class={className} style={style}>
+                {slots.default?.()}
+            </div>
+        );
+    };
 });
 
 // ============================================

@@ -1,12 +1,25 @@
 import { component, type Define } from 'sigx';
+import {
+    resolveBoxStyle,
+    type Spacing,
+    type RadiusValue,
+    type BackgroundColor,
+    type SizeValue,
+} from '../shared/styles';
 
 export type DropdownPosition = 'end' | 'top' | 'bottom' | 'left' | 'right';
 
-export type DropdownProps = 
+export type DropdownProps =
     & Define.Prop<'position', DropdownPosition, false>
     & Define.Prop<'hover', boolean, false>
-    & Define.Prop<'class', string, false>
-    & Define.Prop<'menuClass', string, false>
+    // Styling props below apply to the dropdown content panel (theme-aware,
+    // override the daisyUI defaults p-2 / bg-base-100 / rounded-box).
+    & Define.Prop<'background', BackgroundColor, false>
+    & Define.Prop<'rounded', RadiusValue | boolean, false>
+    & Define.Prop<'width', SizeValue, false>
+    & Define.Prop<'padding', Spacing, false>
+    & Define.Prop<'class', string, false>       // applied to the dropdown root
+    & Define.Prop<'menuClass', string, false>   // extra classes on the content panel
     & Define.Slot<'trigger'>
     & Define.Slot<'default'>;
 
@@ -55,22 +68,38 @@ export const Dropdown = component<DropdownProps>(({ props, slots }) => {
         return classes.join(' ');
     };
 
-    const getMenuClasses = () => {
-        const classes = ['dropdown-content', 'z-[1]', 'menu', 'p-2', 'shadow', 'bg-base-100', 'rounded-box'];
-        if (props.menuClass) classes.push(props.menuClass);
-        return classes.join(' ');
+    const getMenuClassesAndStyle = () => {
+        const classes = ['dropdown-content', 'z-[1]', 'menu', 'shadow'];
+        // daisyUI content defaults, each overridable via the matching prop.
+        if (!props.padding) classes.push('p-2');
+        if (!props.background) classes.push('bg-base-100');
+        if (props.rounded === undefined) classes.push('rounded-box');
+
+        const box = resolveBoxStyle({
+            background: props.background,
+            rounded: props.rounded,
+            width: props.width,
+            padding: props.padding,
+            class: props.menuClass,
+        });
+        if (box.className) classes.push(box.className);
+
+        return { className: classes.join(' '), style: box.style };
     };
 
-    return () => (
-        <div class={getClasses()}>
-            {slots.trigger && (
-                <div tabIndex={0} role="button">
-                    {slots.trigger()}
-                </div>
-            )}
-            <ul tabIndex={0} class={getMenuClasses()}>
-                {slots.default?.()}
-            </ul>
-        </div>
-    );
+    return () => {
+        const menu = getMenuClassesAndStyle();
+        return (
+            <div class={getClasses()}>
+                {slots.trigger && (
+                    <div tabIndex={0} role="button">
+                        {slots.trigger()}
+                    </div>
+                )}
+                <ul tabIndex={0} class={menu.className} style={menu.style}>
+                    {slots.default?.()}
+                </ul>
+            </div>
+        );
+    };
 });

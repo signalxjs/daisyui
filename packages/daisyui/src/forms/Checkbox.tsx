@@ -57,7 +57,7 @@ export const Checkbox = component<CheckboxProps>(({ props, emit }) => {
                 name={props.name}
                 class={`checkbox ${sizeClass} ${colorClass} ${props.class ?? ""}`.trim()}
                 disabled={props.disabled}
-                ref={(el: HTMLInputElement) => { el.indeterminate = !!props.indeterminate; }}
+                ref={(el: HTMLInputElement | null) => { if (el) el.indeterminate = !!props.indeterminate; }}
                 model={props.model}
                 onChange={(e: Event) => emit("change", (e.target as HTMLInputElement).checked)}
             />

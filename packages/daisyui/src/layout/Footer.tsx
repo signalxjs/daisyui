@@ -1,12 +1,13 @@
 import { component, type Define } from 'sigx';
+import { resolveBoxStyle, type BoxStyleProps } from '../shared/styles';
 
 // ============================================
 // Footer Types
 // ============================================
 
-export type FooterProps = 
+export type FooterProps =
     & Define.Prop<'center', boolean, false>
-    & Define.Prop<'class', string, false>
+    & BoxStyleProps
     & Define.Slot<'default'>;
 
 // ============================================
@@ -34,15 +35,22 @@ export type FooterProps =
  */
 export const Footer = component<FooterProps>(({ props, slots }) => {
     const getClasses = () => {
-        const classes = ['footer', 'footer-center', 'p-10', 'bg-base-200', 'text-base-content'];
+        const classes = ['footer', 'footer-center', 'text-base-content'];
+        // daisyUI defaults, overridable via the `padding` / `background` props.
+        if (!props.padding) classes.push('p-10');
+        if (!props.background) classes.push('bg-base-200');
         if (props.center) classes.push('items-center');
-        if (props.class) classes.push(props.class);
-        return classes.join(' ');
+        const box = resolveBoxStyle(props);
+        if (box.className) classes.push(box.className);
+        return { className: classes.join(' '), style: box.style };
     };
 
-    return () => (
-        <footer class={getClasses()}>
-            {slots.default?.()}
-        </footer>
-    );
+    return () => {
+        const { className, style } = getClasses();
+        return (
+            <footer class={className} style={style}>
+                {slots.default?.()}
+            </footer>
+        );
+    };
 });

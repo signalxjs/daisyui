@@ -17,6 +17,12 @@ import {
     hexToOklch,
     generateRandomTheme,
 } from './theme-config';
+import { Button } from '../buttons';
+import { Input, Select, Textarea, Checkbox, Radio, Toggle, Range } from '../forms';
+import { Badge, Alert, Progress, RadialProgress, Loading, Steps, Kbd } from '../feedback';
+import { Card, Chat } from '../layout';
+import { Tabs } from '../navigation';
+import { Avatar, Stats, Table } from '../data';
 
 // ============================================
 // ThemeConfigurator - Main Component
@@ -137,9 +143,9 @@ const _ThemeConfigurator = component<ThemeConfiguratorProps>(({ props, slots, em
         const cssOutput = generateThemeCSS(config);
 
         return (
-            <div class={`theme-configurator flex h-[calc(100vh-8rem)] ${props.class ?? ''}`}>
+            <div class={`theme-configurator flex h-full min-h-0 ${props.class ?? ''}`}>
                 {/* Left Sidebar - Controls */}
-                <div class="w-60 shrink-0 overflow-y-auto border-r border-base-300 pr-3 flex flex-col gap-5 pb-8"
+                <div class="w-72 shrink-0 overflow-y-auto border-r border-base-300 px-4 py-5 flex flex-col gap-5"
                      style="scrollbar-width: thin;">
                     {/* Name & Scheme */}
                     <SidebarHeader
@@ -184,8 +190,8 @@ const _ThemeConfigurator = component<ThemeConfiguratorProps>(({ props, slots, em
                 </div>
 
                 {/* Main Preview Area */}
-                <div class="flex-1 overflow-y-auto pl-6" style="scrollbar-width: thin;">
-                    <div class="bg-base-100 text-base-content rounded-xl p-6 min-h-full" style={styleVars}>
+                <div class="flex-1 overflow-y-auto p-4 lg:p-6" style="scrollbar-width: thin;">
+                    <div class="bg-base-200 text-base-content rounded-xl p-4 lg:p-6 min-h-full" style={styleVars}>
                         {renderPreviewContent(slots.preview)}
                     </div>
                 </div>
@@ -437,17 +443,23 @@ const SidebarRadius = component<SidebarRadiusProps>(({ props }) => {
                     { key: 'radiusField', label: 'Fields', hint: 'button, input, select, tab', value: config.radiusField },
                     { key: 'radiusSelector', label: 'Selectors', hint: 'checkbox, toggle, badge', value: config.radiusSelector },
                 ].map(item => (
-                    <div class="mb-2">
-                        <div class="text-xs font-medium mb-1">{item.label}</div>
-                        <div class="text-[10px] text-base-content/50 mb-1">{item.hint}</div>
-                        {/* Shape previews */}
-                        <div class="flex gap-1 mb-1.5">
+                    <div class="mb-3">
+                        <div class="flex items-baseline justify-between mb-1.5">
+                            <span class="text-xs font-medium">{item.label}</span>
+                            <span class="text-[10px] text-base-content/40">{item.hint}</span>
+                        </div>
+                        {/* Preset buttons — each previews its radius */}
+                        <div class="flex gap-1.5 mb-1.5">
                             {[0, 0.25, 0.5, 1, 1.5, 2].map(r => (
-                                <div
-                                    class={`w-6 h-6 border cursor-pointer transition-all
+                                <button
+                                    type="button"
+                                    title={`${r}rem`}
+                                    aria-label={`${item.label} radius ${r}rem`}
+                                    aria-pressed={Math.abs(item.value - r) < 0.01}
+                                    class={`flex-1 aspect-square border-2 cursor-pointer transition-colors
                                         ${Math.abs(item.value - r) < 0.01
-                                            ? 'border-primary bg-primary/20'
-                                            : 'border-base-300 bg-base-200/50 hover:border-base-content/40'}`}
+                                            ? 'border-primary bg-primary/10'
+                                            : 'border-base-300 bg-base-200/60 hover:border-base-content/40'}`}
                                     style={`border-radius: ${r}rem;`}
                                     onClick={() => onUpdate(item.key, r)}
                                 />
@@ -456,7 +468,7 @@ const SidebarRadius = component<SidebarRadiusProps>(({ props }) => {
                         <input
                             type="range"
                             class="range range-primary range-xs w-full"
-                            min={0} max={2} step={0.125}
+                            min={0} max={2} step={0.0625}
                             value={item.value}
                             onInput={(e: Event) => onUpdate(item.key, parseFloat((e.target as HTMLInputElement).value))}
                         />
@@ -689,373 +701,236 @@ const CssModal = component<CssModalProps>(({ props, emit }) => {
 // ============================================
 
 const DefaultPreview = component(() => {
+    const tab = signal('overview');
+    const radioChoice = signal('a');
+    const rangeVal = signal(60);
+    const wifi = signal(true);
+    const autoSave = signal(false);
+    const checkA = signal(true);
+    const checkB = signal(true);
+    const checkC = signal(false);
+    const stepModel = signal('purchase');
+
+    const colors = ['primary', 'secondary', 'accent', 'neutral', 'info', 'success', 'warning', 'error'] as const;
+    const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+    const demoTabs = [
+        { id: 'overview', label: 'Overview', content: 'Tab buttons use --radius-field; this content panel uses --radius-box.' },
+        { id: 'activity', label: 'Activity', content: 'Switch tabs to see the active state recolor with the theme.' },
+        { id: 'settings', label: 'Settings', content: 'Everything in this preview reacts live to the controls on the left.' },
+    ];
+
+    const sizeOptions = [
+        { value: 'sm', label: 'Small' },
+        { value: 'md', label: 'Medium' },
+        { value: 'lg', label: 'Large' },
+    ];
+
+    const steps = [
+        { id: 'register', label: 'Register', color: 'primary' as const },
+        { id: 'choose', label: 'Choose plan', color: 'primary' as const },
+        { id: 'purchase', label: 'Purchase', color: 'primary' as const },
+        { id: 'receive', label: 'Receive product' },
+    ];
+
     return () => (
         <div>
-            <div class="flex items-center justify-between mb-6">
-                <h2 class="text-2xl font-bold">Components Demo</h2>
+            <div class="mb-5">
+                <h2 class="text-xl font-bold">Components Demo</h2>
+                <p class="text-sm text-base-content/60">Live preview — every control on the left updates these instantly.</p>
             </div>
 
-            <div class="columns-1 md:columns-2 xl:columns-3 gap-4 space-y-4" style="--card-p: 0.5rem;">
-                {/* Card: Checklist */}
-                <div class="card bg-base-100 shadow-sm border border-base-300 break-inside-avoid">
-                    <div class="card-body gap-1">
-                        <div class="flex items-center justify-between mb-1">
-                            <h3 class="font-semibold text-sm flex items-center gap-1.5">
-                                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                                Preview
-                            </h3>
-                            <span class="text-xs text-primary cursor-pointer">more</span>
-                        </div>
-                        <div class="flex flex-wrap gap-1 mb-2">
-                            <span class="badge badge-sm gap-1">Shoes <button class="btn btn-ghost btn-xs p-0 h-auto min-h-0">×</button></span>
-                            <span class="badge badge-sm gap-1">Bags <button class="btn btn-ghost btn-xs p-0 h-auto min-h-0">×</button></span>
-                        </div>
-                        <div class="flex flex-col gap-2">
-                            <label class="flex items-center justify-between cursor-pointer">
-                                <div class="flex items-center gap-2">
-                                    <input type="checkbox" checked class="checkbox checkbox-primary checkbox-sm" />
-                                    <span class="text-sm">Hoodies</span>
-                                </div>
-                                <span class="badge badge-primary badge-sm">25</span>
-                            </label>
-                            <label class="flex items-center justify-between cursor-pointer">
-                                <div class="flex items-center gap-2">
-                                    <input type="checkbox" checked class="checkbox checkbox-primary checkbox-sm" />
-                                    <span class="text-sm">Bags</span>
-                                </div>
-                                <span class="badge badge-primary badge-sm">3</span>
-                            </label>
-                            <label class="flex items-center justify-between cursor-pointer">
-                                <div class="flex items-center gap-2">
-                                    <input type="checkbox" class="checkbox checkbox-sm" />
-                                    <span class="text-sm">Shoes</span>
-                                </div>
-                                <span class="badge badge-error badge-sm">8</span>
-                            </label>
-                            <label class="flex items-center justify-between cursor-pointer">
-                                <div class="flex items-center gap-2">
-                                    <input type="checkbox" class="checkbox checkbox-sm" />
-                                    <span class="text-sm">Accessories</span>
-                                </div>
-                                <span class="badge badge-sm">4</span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Card: Chart / Stats visualization */}
-                <div class="card bg-base-100 shadow-sm border border-base-300 break-inside-avoid">
-                    <div class="card-body gap-1">
-                        {/* Faux bar chart */}
-                        <div class="flex items-end gap-0.5 h-24 mb-2">
-                            {[40, 25, 60, 30, 80, 45, 70, 35, 90, 50, 65, 85, 40, 55, 75].map(h => (
-                                <div class="flex-1 bg-primary rounded-t-sm" style={`height: ${h}%; opacity: ${0.4 + h/150};`} />
-                            ))}
-                        </div>
-                        <p class="text-sm">Sales volume reached $12,450 this week, showing a 15% increase from the previous period.</p>
-                        <div class="flex gap-2 mt-1">
-                            <button class="btn btn-outline btn-sm flex-1">Charts</button>
-                            <button class="btn btn-outline btn-sm flex-1">Details</button>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Card: Audio Player */}
-                <div class="card bg-base-100 shadow-sm border border-base-300 break-inside-avoid">
-                    <div class="card-body gap-1 flex flex-col items-center gap-2">
-                        <div class="flex items-center gap-4">
-                            <button class="btn btn-ghost btn-sm btn-circle">
-                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" /></svg>
-                            </button>
-                            <button class="btn btn-primary btn-circle">
-                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
-                            </button>
-                            <button class="btn btn-ghost btn-sm btn-circle">
-                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" /></svg>
-                            </button>
-                        </div>
-                        <div class="text-center">
-                            <div class="font-semibold text-sm">PM Zoomcall ASMR</div>
-                            <div class="text-xs text-base-content/60">Project Manager talking for 2 hours</div>
-                        </div>
-                        <div class="w-full">
-                            <input type="range" class="range range-primary range-xs w-full" value={35} min={0} max={100} />
-                            <div class="flex justify-between text-[10px] text-base-content/50 mt-0.5">
-                                <span>13:39</span>
-                                <span>120:00</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Card: Calendar */}
-                <div class="card bg-base-100 shadow-sm border border-base-300 break-inside-avoid">
-                    <div class="card-body gap-1">
-                        <div class="flex justify-between text-xs mb-2">
-                            {['12\nM', '13\nT', '14\nW', '15\nT', '16\nF', '17\nS', '18\nS'].map((d, i) => {
-                                const [num, day] = d.split('\n');
-                                return (
-                                    <div class={`text-center px-1.5 py-1 rounded-lg ${i === 2 ? 'bg-primary text-primary-content' : ''}`}>
-                                        <div class="font-medium">{num}</div>
-                                        <div class="text-[10px] text-base-content/60">{day}</div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                        <div class="border-t border-base-300 border-dashed my-2" />
-                        <div class="relative mb-2">
-                            <svg class="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-base-content/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                            <input type="text" placeholder="Search for events" class="input input-bordered input-sm w-full pl-8 text-xs" />
-                        </div>
-                        <label class="flex items-center gap-2 cursor-pointer mb-2">
-                            <input type="checkbox" class="toggle toggle-primary toggle-sm" checked />
-                            <span class="text-xs">Show all day events</span>
-                        </label>
-                        <div class="bg-base-200/50 rounded-lg p-2">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <div class="font-semibold text-sm">Team Sync Meeting</div>
-                                    <div class="text-xs text-base-content/60">Weekly product review with design and development teams</div>
-                                </div>
-                                <span class="text-xs text-base-content/50">1h</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Card: Page Score */}
-                <div class="card bg-base-100 shadow-sm border border-base-300 break-inside-avoid">
-                    <div class="card-body gap-1">
-                        <h3 class="font-semibold text-sm">Page Score</h3>
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <span class="text-4xl font-bold">91</span>
-                                <span class="text-sm text-base-content/60">/100</span>
-                                <div class="flex items-center gap-1 mt-1">
-                                    <div class="w-2 h-2 rounded-full bg-success" />
-                                    <span class="text-xs text-base-content/60">All good</span>
-                                </div>
-                            </div>
-                            <div class="radial-progress text-primary" style="--value:91; --size:3.5rem; --thickness:4px;" role="progressbar">
-                                <span class="text-xs font-bold">91</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Card: Terminal Mockup */}
-                <div class="card bg-base-100 shadow-sm border border-base-300 break-inside-avoid">
-                    <div class="card-body gap-1">
-                        <div class="bg-neutral text-neutral-content rounded-lg p-3">
-                            <div class="flex gap-1 mb-2">
-                                <div class="w-2 h-2 rounded-full bg-base-content/30" />
-                                <div class="w-2 h-2 rounded-full bg-base-content/30" />
-                                <div class="w-2 h-2 rounded-full bg-base-content/30" />
-                            </div>
-                            <div class="font-mono text-xs space-y-1">
-                                <div><span class="text-success">$</span> npm i daisyui</div>
-                                <div class="text-base-content/60">&gt; installing...</div>
-                                <div class="text-base-content/60">&gt; Done!</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Card: Tabs */}
-                <div class="card bg-base-100 shadow-sm border border-base-300 break-inside-avoid">
-                    <div class="card-body gap-1">
-                        <div role="tablist" class="tabs tabs-bordered">
-                            <a role="tab" class="tab">Tab 1</a>
-                            <a role="tab" class="tab tab-active">Tab 2</a>
-                            <a role="tab" class="tab">Tab 3</a>
-                        </div>
-                        <div class="p-3 bg-base-200/50 rounded-lg mt-2">
-                            <p class="text-sm">Tab content 2</p>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Card: Recent orders */}
-                <div class="card bg-base-100 shadow-sm border border-base-300 break-inside-avoid">
-                    <div class="card-body gap-1">
-                        <h3 class="font-semibold text-sm flex items-center gap-1">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
-                            Recent orders
-                        </h3>
-                        <div class="flex flex-col gap-2 mt-1">
-                            {[
-                                { name: 'Charlie Chapman', status: 'Send', color: 'badge-primary' },
-                                { name: 'Howard Hudson', status: 'Failed', color: 'badge-error' },
-                                { name: 'Fiona Fisher', status: 'In progress', color: 'badge-info' },
-                                { name: 'Nick Nelson', status: 'Completed', color: 'badge-success' },
-                                { name: 'Amanda Anderson', status: 'Completed', color: 'badge-success' },
-                            ].map(order => (
-                                <div class="flex items-center justify-between">
-                                    <span class="text-sm">{order.name}</span>
-                                    <span class={`badge badge-sm ${order.color}`}>{order.status}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Card: Revenue Stat */}
-                <div class="card bg-base-100 shadow-sm border border-base-300 break-inside-avoid">
-                    <div class="card-body gap-1">
-                        <h3 class="font-semibold text-sm">March Revenue</h3>
-                        <div class="text-3xl font-bold">$32,400</div>
-                        <div class="flex items-center gap-1 text-xs text-success">
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
-                            21% more than last month
-                        </div>
-                    </div>
-                </div>
-
-                {/* Card: Price Range */}
-                <div class="card bg-base-100 shadow-sm border border-base-300 break-inside-avoid">
-                    <div class="card-body gap-1">
-                        <h3 class="font-semibold text-sm flex items-center gap-1">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                            Price range
-                        </h3>
-                        <div class="text-5xl font-bold text-center my-2">50</div>
-                        <input type="range" class="range range-primary" value={50} min={0} max={100} />
-                    </div>
-                </div>
-
-                {/* Card: Alerts */}
-                <div class="card bg-base-100 shadow-sm border border-base-300 break-inside-avoid">
-                    <div class="card-body gap-1">
-                        <div class="alert alert-info py-2 px-3">
-                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                            <span class="text-xs">There are 9 new messages</span>
-                        </div>
-                        <div class="alert alert-success py-2 px-3">
-                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                            <span class="text-xs">Verification process completed</span>
-                        </div>
-                        <div class="alert alert-warning py-2 px-3">
-                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                            <span class="text-xs">Click to verify your email</span>
-                        </div>
-                        <div class="alert alert-error py-2 px-3">
-                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-                            <div class="flex-1 flex justify-between items-center">
-                                <span class="text-xs">Access denied</span>
-                                <span class="text-xs font-medium cursor-pointer">Support</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Card: Buttons showcase */}
-                <div class="card bg-base-100 shadow-sm border border-base-300 break-inside-avoid">
-                    <div class="card-body gap-1">
-                        <h3 class="font-semibold text-sm">Buttons</h3>
+            <div class="columns-1 sm:columns-2 xl:columns-3 2xl:columns-4 gap-4">
+                {/* Buttons — fields radius */}
+                <Card shadow="sm" class="mb-4 break-inside-avoid bg-base-100 border border-base-300">
+                    <Card.Body>
+                        <Card.Title>Buttons</Card.Title>
                         <div class="flex flex-wrap gap-2">
-                            <button class="btn btn-primary btn-sm">Primary</button>
-                            <button class="btn btn-secondary btn-sm">Secondary</button>
-                            <button class="btn btn-accent btn-sm">Accent</button>
-                            <button class="btn btn-neutral btn-sm">Neutral</button>
-                            <button class="btn btn-ghost btn-sm">Ghost</button>
-                            <button class="btn btn-link btn-sm">Link</button>
+                            {colors.map(c => <Button variant={c} size="sm">{cap(c)}</Button>)}
                         </div>
                         <div class="flex flex-wrap gap-2 mt-1">
-                            <button class="btn btn-outline btn-primary btn-sm">Outline</button>
-                            <button class="btn btn-outline btn-secondary btn-sm">Outline</button>
-                            <button class="btn btn-outline btn-accent btn-sm">Outline</button>
+                            <Button variant="primary" size="sm" outline>Outline</Button>
+                            <Button variant="primary" size="sm" soft>Soft</Button>
+                            <Button size="sm">Default</Button>
+                            <Button variant="primary" size="sm" disabled>Disabled</Button>
                         </div>
-                    </div>
-                </div>
+                        <div class="flex flex-wrap items-center gap-2 mt-1">
+                            <Button variant="primary" size="xs">xs</Button>
+                            <Button variant="primary" size="sm">sm</Button>
+                            <Button variant="primary" size="md">md</Button>
+                            <Button variant="primary" size="lg">lg</Button>
+                        </div>
+                    </Card.Body>
+                </Card>
 
-                {/* Card: Form Elements */}
-                <div class="card bg-base-100 shadow-sm border border-base-300 break-inside-avoid">
-                    <div class="card-body gap-1">
-                        <h3 class="font-semibold text-sm flex items-center gap-1">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                            Write a new post
-                        </h3>
-                        <input type="text" placeholder="Post title..." class="input input-bordered input-sm w-full" />
-                        <textarea class="textarea textarea-bordered text-xs" rows={2} placeholder="What's on your mind?" />
-                        <div class="flex justify-end gap-2">
-                            <button class="btn btn-ghost btn-sm">Cancel</button>
-                            <button class="btn btn-primary btn-sm">Publish</button>
+                {/* Form fields — fields radius */}
+                <Card shadow="sm" class="mb-4 break-inside-avoid bg-base-100 border border-base-300">
+                    <Card.Body>
+                        <Card.Title>Form fields</Card.Title>
+                        <div class="flex flex-col gap-2">
+                            <Input variant="bordered" placeholder="Email address" />
+                            <Input variant="bordered" color="primary" placeholder="Primary input" />
+                            <Select variant="bordered" options={sizeOptions} placeholder="Pick a size" />
+                            <Textarea variant="bordered" rows={2} placeholder="Your message..." />
+                            <span class="text-xs text-base-content/50">Inputs, selects &amp; textareas use --radius-field</span>
                         </div>
-                    </div>
-                </div>
+                    </Card.Body>
+                </Card>
 
-                {/* Card: Badges & Progress */}
-                <div class="card bg-base-100 shadow-sm border border-base-300 break-inside-avoid">
-                    <div class="card-body gap-1">
-                        <h3 class="font-semibold text-sm">Status Overview</h3>
-                        <div class="flex flex-wrap gap-2 mb-2">
-                            <span class="badge badge-primary">Primary</span>
-                            <span class="badge badge-secondary">Secondary</span>
-                            <span class="badge badge-accent">Accent</span>
-                            <span class="badge badge-info">Info</span>
-                            <span class="badge badge-success">Success</span>
-                            <span class="badge badge-warning">Warning</span>
-                            <span class="badge badge-error">Error</span>
+                {/* Selectors — selector radius */}
+                <Card shadow="sm" class="mb-4 break-inside-avoid bg-base-100 border border-base-300">
+                    <Card.Body>
+                        <Card.Title>Selectors</Card.Title>
+                        <div class="flex flex-col gap-2">
+                            <Checkbox color="primary" label="Notifications" model={() => checkA.value} />
+                            <Checkbox color="secondary" label="Newsletter" model={() => checkB.value} />
+                            <Checkbox color="accent" label="Beta features" model={() => checkC.value} />
                         </div>
-                        <div class="space-y-2">
-                            <progress class="progress progress-primary w-full" value={70} max={100} />
-                            <progress class="progress progress-secondary w-full" value={45} max={100} />
-                            <progress class="progress progress-accent w-full" value={90} max={100} />
+                        <Radio name="demo-radio" model={() => radioChoice.value} direction="horizontal" color="primary">
+                            <Radio.Item value="a" label="One" />
+                            <Radio.Item value="b" label="Two" />
+                            <Radio.Item value="c" label="Three" />
+                        </Radio>
+                        <div class="flex flex-col gap-2">
+                            <Toggle color="primary" label="Wi-Fi" model={() => wifi.value} />
+                            <Toggle color="accent" label="Auto-save" model={() => autoSave.value} />
                         </div>
-                    </div>
-                </div>
+                        <Range color="primary" model={() => rangeVal.value} min={0} max={100} />
+                        <span class="text-xs text-base-content/50">Checkboxes, toggles &amp; badges use --radius-selector</span>
+                    </Card.Body>
+                </Card>
 
-                {/* Card: Timeline */}
-                <div class="card bg-base-100 shadow-sm border border-base-300 break-inside-avoid">
-                    <div class="card-body gap-1">
-                        <ul class="steps steps-vertical text-xs">
-                            <li class="step step-primary">
-                                <span>Harry Potter and Sorcerer's Stack</span>
-                            </li>
-                            <li class="step step-primary">
-                                <span>Harry Potter and Chamber of Servers</span>
-                            </li>
-                            <li class="step step-primary">
-                                <span>Harry Potter and Prisoner of Azure</span>
-                            </li>
-                            <li class="step">
-                                <span>Harry Potter and the Goblet of Firebase</span>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
+                {/* Badges — selector radius */}
+                <Card shadow="sm" class="mb-4 break-inside-avoid bg-base-100 border border-base-300">
+                    <Card.Body>
+                        <Card.Title>Badges</Card.Title>
+                        <div class="flex flex-wrap gap-1.5">
+                            {colors.map(c => <Badge variant={c}>{cap(c)}</Badge>)}
+                        </div>
+                        <div class="flex flex-wrap gap-1.5 mt-1">
+                            {colors.slice(0, 4).map(c => <Badge variant={c} badgeStyle="soft">{cap(c)}</Badge>)}
+                        </div>
+                        <div class="flex flex-wrap gap-1.5 mt-1">
+                            {colors.slice(0, 4).map(c => <Badge variant={c} badgeStyle="outline">{cap(c)}</Badge>)}
+                        </div>
+                    </Card.Body>
+                </Card>
 
-                {/* Card: Toggle & Selectors */}
-                <div class="card bg-base-100 shadow-sm border border-base-300 break-inside-avoid">
-                    <div class="card-body gap-1">
-                        <h3 class="font-semibold text-sm">Selectors</h3>
-                        <div class="flex flex-col gap-3">
-                            <label class="flex items-center justify-between cursor-pointer">
-                                <span class="text-sm">Notifications</span>
-                                <input type="checkbox" class="toggle toggle-primary" checked />
-                            </label>
-                            <label class="flex items-center justify-between cursor-pointer">
-                                <span class="text-sm">Dark mode</span>
-                                <input type="checkbox" class="toggle toggle-secondary" />
-                            </label>
-                            <label class="flex items-center justify-between cursor-pointer">
-                                <span class="text-sm">Auto-save</span>
-                                <input type="checkbox" class="toggle toggle-accent" checked />
-                            </label>
+                {/* Alerts — box radius */}
+                <Card shadow="sm" class="mb-4 break-inside-avoid bg-base-100 border border-base-300">
+                    <Card.Body>
+                        <Card.Title>Alerts</Card.Title>
+                        <div class="flex flex-col gap-2">
+                            <Alert variant="info">A new software update is available.</Alert>
+                            <Alert variant="success">Your purchase has been confirmed.</Alert>
+                            <Alert variant="warning">Your subscription expires soon.</Alert>
+                            <Alert variant="error">Something went wrong, please retry.</Alert>
                         </div>
-                        <div class="divider my-1" />
-                        <div class="flex gap-3">
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" class="checkbox checkbox-primary checkbox-sm" checked />
-                                <span class="text-xs">Option A</span>
-                            </label>
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" class="checkbox checkbox-secondary checkbox-sm" />
-                                <span class="text-xs">Option B</span>
-                            </label>
+                        <span class="text-xs text-base-content/50">Alerts &amp; cards use --radius-box</span>
+                    </Card.Body>
+                </Card>
+
+                {/* Tabs — box radius on the panel; label corners cap at --radius-field (daisyUI) */}
+                <Card shadow="sm" class="mb-4 break-inside-avoid bg-base-100 border border-base-300">
+                    <Card.Body>
+                        <Card.Title>Tabs</Card.Title>
+                        {/* daisyUI's lift only paints the active tab + content (base-100), so they need a
+                            darker surface to "lift" off — sit them on base-200 like daisyUI's own preview. */}
+                        <div class="rounded-box bg-base-200 p-3">
+                            <Tabs tabs={demoTabs} activeTab={tab.value} onChange={(id) => { tab.value = id; }} variant="lift" />
                         </div>
-                    </div>
-                </div>
+                        <span class="text-xs text-base-content/50">Lift tabs sit on base-200; the panel uses --radius-box, labels cap at --radius-field</span>
+                    </Card.Body>
+                </Card>
+
+                {/* Progress & loading */}
+                <Card shadow="sm" class="mb-4 break-inside-avoid bg-base-100 border border-base-300">
+                    <Card.Body>
+                        <Card.Title>Progress</Card.Title>
+                        <div class="flex flex-col gap-2">
+                            <Progress value={70} max={100} color="primary" />
+                            <Progress value={45} max={100} color="secondary" />
+                            <Progress value={80} max={100} color="accent" />
+                            <Progress value={60} max={100} color="success" />
+                        </div>
+                        <div class="flex items-center gap-4 mt-2">
+                            <RadialProgress value={70} color="primary">70%</RadialProgress>
+                            <Loading type="spinner" color="primary" />
+                            <Loading type="dots" color="secondary" />
+                            <Loading type="bars" color="accent" />
+                        </div>
+                    </Card.Body>
+                </Card>
+
+                {/* Chat */}
+                <Card shadow="sm" class="mb-4 break-inside-avoid bg-base-100 border border-base-300">
+                    <Card.Body>
+                        <Card.Title>Chat</Card.Title>
+                        <Chat start>
+                            <Chat.Bubble>Is the theme fully reactive?</Chat.Bubble>
+                        </Chat>
+                        <Chat end>
+                            <Chat.Bubble color="primary">Yes — try the radius sliders!</Chat.Bubble>
+                        </Chat>
+                    </Card.Body>
+                </Card>
+
+                {/* Stats */}
+                <Card shadow="sm" class="mb-4 break-inside-avoid bg-base-100 border border-base-300">
+                    <Card.Body>
+                        <Card.Title>Stats</Card.Title>
+                        <Stats>
+                            <Stats.Item>
+                                <Stats.Title>Downloads</Stats.Title>
+                                <Stats.Value>31K</Stats.Value>
+                                <Stats.Desc>↗︎ 12% this month</Stats.Desc>
+                            </Stats.Item>
+                        </Stats>
+                    </Card.Body>
+                </Card>
+
+                {/* Steps — fields radius */}
+                <Card shadow="sm" class="mb-4 break-inside-avoid bg-base-100 border border-base-300">
+                    <Card.Body>
+                        <Card.Title>Steps</Card.Title>
+                        <Steps items={steps} model={() => stepModel.value} vertical />
+                    </Card.Body>
+                </Card>
+
+                {/* Data display */}
+                <Card shadow="sm" class="mb-4 break-inside-avoid bg-base-100 border border-base-300">
+                    <Card.Body>
+                        <Card.Title>Data display</Card.Title>
+                        <div class="flex items-center gap-3">
+                            <Avatar placeholder="JD" size="sm" />
+                            <Avatar placeholder="AS" size="sm" ring ringColor="primary" />
+                            <Avatar placeholder="MK" size="sm" />
+                        </div>
+                        <div class="flex items-center gap-1 mt-1">
+                            <Kbd size="sm">⌘</Kbd>
+                            <span class="text-xs">+</span>
+                            <Kbd size="sm">K</Kbd>
+                        </div>
+                        <Table zebra size="sm">
+                            <Table.Head>
+                                <Table.Row>
+                                    <Table.Th>Name</Table.Th>
+                                    <Table.Th>Role</Table.Th>
+                                </Table.Row>
+                            </Table.Head>
+                            <Table.Body>
+                                <Table.Row>
+                                    <Table.Td>Alice</Table.Td>
+                                    <Table.Td>Admin</Table.Td>
+                                </Table.Row>
+                                <Table.Row>
+                                    <Table.Td>Bob</Table.Td>
+                                    <Table.Td>Editor</Table.Td>
+                                </Table.Row>
+                            </Table.Body>
+                        </Table>
+                    </Card.Body>
+                </Card>
             </div>
         </div>
     );

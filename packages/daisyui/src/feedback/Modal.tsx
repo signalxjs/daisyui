@@ -1,4 +1,5 @@
-import { component, compound, Portal, onMounted, effect, type Define } from 'sigx';
+import { component, compound, Portal, onMounted, onUnmounted, effect, type Define } from 'sigx';
+import { resolveBoxStyle, type BoxStyleProps } from '../shared/styles';
 
 // ============================================
 // Types
@@ -13,7 +14,8 @@ export type ModalAlign = 'start' | 'end';
 
 export type ModalProps =
     & Define.Model<boolean>
-    & Define.Prop<'class', string, false>
+    // Styling props (and `class`) apply to the inner `.modal-box` panel.
+    & BoxStyleProps
     & Define.Prop<'position', ModalPosition, false>
     & Define.Prop<'align', ModalAlign, false>
     & Define.Prop<'backdrop', boolean, false>
@@ -48,7 +50,18 @@ const _Modal = component<ModalProps>(({ props, slots }) => {
     };
 
     const handleClick = (e: MouseEvent) => {
+        // backdrop={false} → no click-outside-to-close (close via button / ESC only)
+        if (props.backdrop === false) return;
         if (e.target === dialogRef) {
+            close();
+        }
+    };
+
+    // Non-modal dialogs opened with show() don't dismiss on Esc the way
+    // showModal() ones do, so emulate it for the backdrop={false} case.
+    const handleKeydown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape' && props.backdrop === false && props.model?.value) {
+            e.preventDefault();
             close();
         }
     };
@@ -61,11 +74,23 @@ const _Modal = component<ModalProps>(({ props, slots }) => {
             const isDialogOpen = dialogRef.open;
 
             if (isOpen && !isDialogOpen) {
-                dialogRef.showModal();
+                // backdrop={false} → open non-modally with show() so the rest of
+                // the page stays interactive (no top-layer / focus-trap). The
+                // default keeps showModal() for a blocking, Esc-closable dialog.
+                if (props.backdrop === false) {
+                    dialogRef.show();
+                } else {
+                    dialogRef.showModal();
+                }
             } else if (!isOpen && isDialogOpen) {
                 dialogRef.close();
             }
         });
+        document.addEventListener('keydown', handleKeydown);
+    });
+
+    onUnmounted(() => {
+        document.removeEventListener('keydown', handleKeydown);
     });
 
     return () => {
@@ -76,15 +101,20 @@ const _Modal = component<ModalProps>(({ props, slots }) => {
         if (props.align === 'start') classes.push('modal-start');
         if (props.align === 'end') classes.push('modal-end');
 
+        const box = resolveBoxStyle(props);
+
         return (
             <Portal>
                 <dialog
                     ref={(el: HTMLDialogElement) => dialogRef = el}
                     class={classes.join(' ')}
+                    // backdrop={false} → remove the dimming overlay (daisyUI applies
+                    // a 40%-black background to .modal[open]); inline wins over it.
+                    style={props.backdrop === false ? { backgroundColor: 'transparent' } : undefined}
                     onClose={handleClose}
                     onClick={handleClick}
                 >
-                    <div class={`modal-box ${props.class ?? ''}`}>
+                    <div class={`modal-box ${box.className}`.trim()} style={box.style}>
                         {slots.default?.()}
                     </div>
                     {props.backdrop !== false && (

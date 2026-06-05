@@ -1,4 +1,11 @@
 import { component, JSXElement, type Define } from 'sigx';
+import {
+    resolveBoxStyle,
+    type Spacing,
+    type RadiusValue,
+    type BackgroundColor,
+    type SizeValue,
+} from '../shared/styles';
 
 export interface Tab {
     id: string;
@@ -18,8 +25,14 @@ export type TabsProps =
     & Define.Prop<'size', TabsSize, false>
     & Define.Prop<'position', TabsPosition, false>
     & Define.Prop<'name', string, false>
-    & Define.Prop<'contentClass', string, false>
-    & Define.Prop<'class', string, false>
+    // Styling props apply to the tab content panel (`.tab-content`),
+    // overriding the daisyUI defaults bg-base-100 / p-6.
+    & Define.Prop<'background', BackgroundColor, false>
+    & Define.Prop<'rounded', RadiusValue | boolean, false>
+    & Define.Prop<'width', SizeValue, false>
+    & Define.Prop<'padding', Spacing, false>
+    & Define.Prop<'contentClass', string, false>  // extra classes on the content panel
+    & Define.Prop<'class', string, false>          // applied to the tablist root
     & Define.Event<'change', string>;
 
 const tabsSizeClasses: Record<TabsSize, string> = {
@@ -82,17 +95,28 @@ export const Tabs = component<TabsProps>(({ props, emit }) => {
         return classes.join(' ');
     };
     
-    const getContentClasses = () => {
-        const classes = ['tab-content', 'bg-base-100', 'border-base-300', 'p-6'];
-        if (props.contentClass) classes.push(props.contentClass);
-        return classes.join(' ');
+    const getContentClassesAndStyle = () => {
+        const classes = ['tab-content', 'border-base-300'];
+        // daisyUI content defaults, overridable via the matching props.
+        if (!props.background) classes.push('bg-base-100');
+        if (!props.padding) classes.push('p-6');
+        const box = resolveBoxStyle({
+            background: props.background,
+            rounded: props.rounded,
+            width: props.width,
+            padding: props.padding,
+            class: props.contentClass,
+        });
+        if (box.className) classes.push(box.className);
+        return { className: classes.join(' '), style: box.style };
     };
 
     return () => {
         const showContent = hasContent();
-        
+
         // If tabs have content, use radio input pattern (DaisyUI's native tab content switching)
         if (showContent) {
+            const content = getContentClassesAndStyle();
             return (
                 <div role="tablist" class={getContainerClasses()}>
                     {props.tabs?.map(tab => [
@@ -105,7 +129,7 @@ export const Tabs = component<TabsProps>(({ props, emit }) => {
                             disabled={tab.disabled}
                             onChange={() => !tab.disabled && emit('change', tab.id)}
                         />,
-                        <div class={getContentClasses()}>
+                        <div class={content.className} style={content.style}>
                             {tab.content}
                         </div>
                     ])}
