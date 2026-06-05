@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.4.3] — 2026-06-05
+
+### Added
+
+- Theme radius tokens `box` / `field` / `selector` for the `rounded` prop (resolve to `--radius-box` / `--radius-field` / `--radius-selector`).
+- Typed container styling props (`background` / `rounded` / `width` / `padding`) on `Card`, `Stack`, `Join`, `Stats`, `Navbar`, `Footer`, `Flex`, `Hero`, `Drawer`, `Dropdown`, the `Tabs` content panel, and `Menu`.
+- `Menu.Item` gains `href` (renders a real `<a href>` with `menu-active` applied automatically) and `asChild` (render your own `<a>` / `<button>` / router `<Link>` without nesting interactive elements).
+- Overhauled `ThemeConfigurator`: fills its container, daisyUI-style radius controls (preset rows + slider), and a live demo built from the library's own components so radius/colors visibly apply.
+
+### Fixed
+
+- `Checkbox`: guard the `indeterminate` ref against `null`. sigx calls a `ref` callback with `null` on unmount, so `null.indeterminate = …` threw and aborted reconciliation, leaving stale DOM when navigating away from any page containing a checkbox.
+- `Modal`: `backdrop={false}` now opens the dialog non-modally (`show()`) so the rest of the page stays interactive; Esc-to-close is preserved via a key handler.
+- `Tabs`: the content panel honours `background` / `rounded` / `padding` / `width`.
+- `Menu`: model-driven active state, badge alignment, and sidebar layout.
+
 ## [0.4.2] — 2026-05-12
 
 ### Changed
