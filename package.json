@@ -6,6 +6,7 @@
   "description": "SignalX DaisyUI — beautiful, accessible UI components with full theme support",
   "type": "module",
   "scripts": {
+    "wt": "node scripts/worktree.mjs",
     "build": "pnpm --filter @sigx/daisyui run build",
     "test": "vitest run",
     "test:watch": "vitest",
