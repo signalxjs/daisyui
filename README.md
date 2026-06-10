@@ -22,7 +22,7 @@ bundle.
 
 ```tsx
 import { component, defineApp } from "sigx";
-import { ThemeProvider, Button, Card, CardTitle } from "@sigx/daisyui";
+import { ThemeProvider, Button, Card } from "@sigx/daisyui";
 
 const App = component(({ signal }) => {
   const count = signal(0);
@@ -31,7 +31,7 @@ const App = component(({ signal }) => {
     <ThemeProvider defaultTheme="cupcake" darkMode>
       <Card>
         <Card.Body center>
-          <CardTitle>Counter: {count.value}</CardTitle>
+          <Card.Title>Counter: {count.value}</Card.Title>
           <Button variant="primary" onClick={() => count.value++}>Increment</Button>
         </Card.Body>
       </Card>
