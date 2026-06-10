@@ -71,7 +71,7 @@
         "url": "git+https://github.com/signalxjs/daisyui.git",
         "directory": "packages/daisyui"
     },
-    "homepage": "https://github.com/signalxjs/daisyui/tree/main/packages/daisyui",
+    "homepage": "https://sigx.dev/daisyui/",
     "bugs": {
         "url": "https://github.com/signalxjs/daisyui/issues"
     },
