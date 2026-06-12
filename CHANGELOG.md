@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.6.0] — 2026-06-12
+
 ### Changed
 
 - **BREAKING (packaging):** `@sigx/reactivity`, `@sigx/runtime-core` and `@sigx/runtime-dom` moved from `dependencies` to `peerDependencies` (`>=0.6.0 <0.7.0`), and the `sigx` peer range tightened from `>=0.4.3` to `>=0.6.0 <0.7.0`. Hard-pinned 0.x core dependencies could not overlap with the ranges pinned by other `@sigx` packages (e.g. `sigx@0.6.0` pins `^0.6.0`), so consumers ended up with **multiple copies of the reactivity engine** — signals owned by one copy were invisible to effects owned by another, producing silently dead UI. As peers, the core packages now always resolve to the app's single copy, and an out-of-range `sigx` fails installation loudly instead of silently misbehaving. Requires `sigx` 0.6.x.
@@ -52,7 +54,9 @@ Initial release of `@sigx/daisyui` from the dedicated [`signalxjs/daisyui`](http
 - `@sigx/reactivity`, `@sigx/runtime-core`, `@sigx/runtime-dom` and `sigx` are now consumed from npm (`^0.4.0`) instead of via workspace links.
 - Version aligned with the rest of the SignalX ecosystem (`0.4.x`).
 
-[Unreleased]: https://github.com/signalxjs/daisyui/compare/v0.4.2...HEAD
+[Unreleased]: https://github.com/signalxjs/daisyui/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/signalxjs/daisyui/releases/tag/v0.6.0
+[0.4.3]: https://github.com/signalxjs/daisyui/releases/tag/v0.4.3
 [0.4.2]: https://github.com/signalxjs/daisyui/releases/tag/v0.4.2
 [0.4.1]: https://github.com/signalxjs/daisyui/releases/tag/v0.4.1
 [0.4.0]: https://github.com/signalxjs/daisyui/releases/tag/v0.4.0
