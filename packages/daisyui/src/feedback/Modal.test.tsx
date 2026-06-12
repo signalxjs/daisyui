@@ -1,5 +1,5 @@
-import { describe, it, expect, afterEach } from 'vitest';
-import { render } from 'sigx';
+import { describe, it, expect, afterEach, vi } from 'vitest';
+import { render, signal } from 'sigx';
 import { Modal } from './Modal';
 
 function renderToDiv(jsx: any): HTMLElement {
@@ -177,5 +177,46 @@ describe('Modal.Actions', () => {
         );
         const actions = document.querySelector('dialog .modal-box .modal-action.justify-start');
         expect(actions).toBeTruthy();
+    });
+});
+
+describe('Modal lifecycle registration', () => {
+    // Regression test for the "onUnmounted called outside of component setup"
+    // warning seen under sigx 0.6: @sigx/vite's HMR plugin re-runs a component's
+    // setup with the existing instance context and NO current instance set
+    // (dist/hmr.js, onDefine -> existingInstances.forEach -> setup(instance.ctx)).
+    // With module-level onMounted/onUnmounted imports that re-run warns and
+    // silently drops the cleanup (leaking Modal's document keydown listener);
+    // with the context-bound hooks it stays tied to the instance. This test
+    // mirrors the HMR re-run exactly.
+    it('setup re-run outside a mount (HMR-style) registers hooks without warning', () => {
+        const factory = Modal as unknown as { __setup: (ctx: unknown) => unknown };
+        const originalSetup = factory.__setup;
+        expect(typeof originalSetup).toBe('function');
+
+        // Capture the instance context the renderer passes to setup.
+        let capturedCtx: unknown = null;
+        factory.__setup = (ctx: unknown) => {
+            capturedCtx = ctx;
+            return originalSetup(ctx);
+        };
+        try {
+            const open = signal(false);
+            renderToDiv(<Modal model={() => open.value}>Content</Modal>);
+            expect(capturedCtx).toBeTruthy();
+
+            // What @sigx/vite HMR does on a hot update: re-run the setup with the
+            // existing ctx, outside any mount (no current instance).
+            const warn = vi.spyOn(console, 'warn');
+            try {
+                originalSetup(capturedCtx);
+                const warnings = warn.mock.calls.map((c) => String(c[0]));
+                expect(warnings.filter((m) => m.includes('outside of component setup'))).toEqual([]);
+            } finally {
+                warn.mockRestore();
+            }
+        } finally {
+            factory.__setup = originalSetup;
+        }
     });
 });
