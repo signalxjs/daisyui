@@ -208,10 +208,13 @@ describe('Modal lifecycle registration', () => {
             // What @sigx/vite HMR does on a hot update: re-run the setup with the
             // existing ctx, outside any mount (no current instance).
             const warn = vi.spyOn(console, 'warn');
-            originalSetup(capturedCtx);
-            const warnings = warn.mock.calls.map((c) => String(c[0]));
-            expect(warnings.filter((m) => m.includes('outside of component setup'))).toEqual([]);
-            warn.mockRestore();
+            try {
+                originalSetup(capturedCtx);
+                const warnings = warn.mock.calls.map((c) => String(c[0]));
+                expect(warnings.filter((m) => m.includes('outside of component setup'))).toEqual([]);
+            } finally {
+                warn.mockRestore();
+            }
         } finally {
             factory.__setup = originalSetup;
         }

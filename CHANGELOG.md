@@ -14,6 +14,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - `Modal`: register `onMounted`/`onUnmounted` through the component's setup context instead of the module-level hook imports. The module-level hooks resolve the current instance through shared module state, which breaks when a setup function is re-run outside a mount (e.g. `@sigx/vite`'s HMR update path) — logging `onUnmounted called outside of component setup` and leaking Modal's document `keydown` listener. The context-bound hooks always target the right instance.
 
+## [0.4.3] — 2026-06-05
+
 ### Added
 
 - Theme radius tokens `box` / `field` / `selector` for the `rounded` prop (resolve to `--radius-box` / `--radius-field` / `--radius-selector`).
