@@ -87,12 +87,13 @@ function main() {
             packed.map((p) => [p.name, `file:${p.tarball.replace(/\\/g, '/')}`])
         ),
         // The peer deps daisyui & tailwindcss aren't needed for typechecking,
-        // but sigx and the @sigx/* runtime deps must resolve. Use the same
-        // versions that @sigx/daisyui pins so npm sees a consistent graph.
+        // but sigx and the @sigx/* core peers must resolve — the scratch app
+        // plays the consumer, so it installs them itself. Use the same ranges
+        // that @sigx/daisyui declares so npm sees a consistent graph.
         sigx: daisyuiPkg.peerDependencies.sigx,
-        '@sigx/reactivity': daisyuiPkg.dependencies['@sigx/reactivity'],
-        '@sigx/runtime-core': daisyuiPkg.dependencies['@sigx/runtime-core'],
-        '@sigx/runtime-dom': daisyuiPkg.dependencies['@sigx/runtime-dom'],
+        '@sigx/reactivity': daisyuiPkg.peerDependencies['@sigx/reactivity'],
+        '@sigx/runtime-core': daisyuiPkg.peerDependencies['@sigx/runtime-core'],
+        '@sigx/runtime-dom': daisyuiPkg.peerDependencies['@sigx/runtime-dom'],
     };
     const appPkg = {
         name: 'sigx-daisyui-pack-smoke',

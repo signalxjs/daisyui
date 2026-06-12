@@ -6,7 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
-## [0.4.3] — 2026-06-05
+### Changed
+
+- **BREAKING (packaging):** `@sigx/reactivity`, `@sigx/runtime-core` and `@sigx/runtime-dom` moved from `dependencies` to `peerDependencies` (`>=0.6.0 <0.7.0`), and the `sigx` peer range tightened from `>=0.4.3` to `>=0.6.0 <0.7.0`. Hard-pinned 0.x core dependencies could not overlap with the ranges pinned by other `@sigx` packages (e.g. `sigx@0.6.0` pins `^0.6.0`), so consumers ended up with **multiple copies of the reactivity engine** — signals owned by one copy were invisible to effects owned by another, producing silently dead UI. As peers, the core packages now always resolve to the app's single copy, and an out-of-range `sigx` fails installation loudly instead of silently misbehaving. Requires `sigx` 0.6.x.
+
+### Fixed
+
+- `Modal`: register `onMounted`/`onUnmounted` through the component's setup context instead of the module-level hook imports. The module-level hooks resolve the current instance through shared module state, which breaks when a setup function is re-run outside a mount (e.g. `@sigx/vite`'s HMR update path) — logging `onUnmounted called outside of component setup` and leaking Modal's document `keydown` listener. The context-bound hooks always target the right instance.
 
 ### Added
 

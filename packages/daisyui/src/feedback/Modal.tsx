@@ -1,4 +1,4 @@
-import { component, compound, Portal, onMounted, onUnmounted, effect, type Define } from 'sigx';
+import { component, compound, Portal, effect, type Define } from 'sigx';
 import { resolveBoxStyle, type BoxStyleProps } from '../shared/styles';
 
 // ============================================
@@ -38,7 +38,14 @@ export type ModalProps =
  * </Modal>
  * ```
  */
-const _Modal = component<ModalProps>(({ props, slots }) => {
+// Lifecycle hooks come from the setup context (not the module-level
+// `onMounted`/`onUnmounted` imports): the context methods are bound to THIS
+// instance, so they keep working when a setup function is re-run outside a
+// mount (e.g. @sigx/vite's HMR update path re-runs setups with the existing
+// context and no current instance — the module-level hooks would warn
+// "onUnmounted called outside of component setup" and silently drop the
+// cleanup, leaking the document keydown listener).
+const _Modal = component<ModalProps>(({ props, slots, onMounted, onUnmounted }) => {
     let dialogRef: HTMLDialogElement | null = null;
 
     const close = () => {
