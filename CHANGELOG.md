@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
-- Retargeted the SignalX core peer range to the `0.7.x` line: the `sigx`, `@sigx/reactivity`, `@sigx/runtime-core` and `@sigx/runtime-dom` peers move from `>=0.6.0 <0.7.0` to `>=0.7.0 <0.8.0` (dev/build deps bumped to `^0.7.0` to match). Requires `sigx` 0.7.x.
+- **BREAKING (packaging):** Retargeted the SignalX core peer range to the `0.7.x` line: the `sigx`, `@sigx/reactivity`, `@sigx/runtime-core` and `@sigx/runtime-dom` peers move from `>=0.6.0 <0.7.0` to `>=0.7.0 <0.8.0` (dev/build deps bumped to `^0.7.0` to match). Consumers must now be on the SignalX core `0.7.x` line — `sigx` and all `@sigx/*` core packages — across their dependency tree; an out-of-range install fails loudly.
 
 ## [0.6.0] — 2026-06-12
 
