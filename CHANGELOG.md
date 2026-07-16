@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- **BREAKING (packaging):** Retargeted the SignalX core peer range to the `0.10.x` line: the `sigx`, `@sigx/reactivity`, `@sigx/runtime-core` and `@sigx/runtime-dom` peers move from `>=0.7.0 <0.8.0` to `>=0.10.0 <0.11.0` (dev/build deps bumped to `^0.10.0` to match), skipping the 0.8.x and 0.9.x lines. Consumers must now be on the SignalX core `0.10.x` line — `sigx` and all `@sigx/*` core packages — across their dependency tree. Package managers that enforce peer ranges (e.g. pnpm with its default `strict-peer-dependencies`) refuse to install an out-of-range core; others surface it as a peer-dependency warning.
+
+  `@sigx/daisyui`'s own API is unchanged, but core 0.9.0 removed the old async and error primitives outright with no compat shims — `useAsync`, `throwOnError`, `<Suspense>`, `<ErrorBoundary>`, the throw-a-promise protocol and `app.config.errorHandler`. This library never used any of them, so upgrading it needs no code changes; an app that uses them directly must migrate to `useData` / `errorScope` / `<Defer>` / `app.onError` as part of moving its core to 0.10.x. See the [SignalX changelog](https://github.com/signalxjs/core/blob/main/CHANGELOG.md) for the full migration.
+
 ## [0.7.0] — 2026-06-15
 
 ### Changed
