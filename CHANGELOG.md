@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-07-18
+
 ### Changed
 
 - **BREAKING (packaging):** Retargeted the SignalX core peer range to the `0.12.x` line: the `sigx`, `@sigx/reactivity`, `@sigx/runtime-core` and `@sigx/runtime-dom` peers move from `>=0.10.0 <0.11.0` to `>=0.12.0 <0.13.0` (dev/build deps — including `@sigx/vite` — bumped to `^0.12.0` to match), skipping the 0.11.x line. Consumers must now be on the SignalX core `0.12.x` line — `sigx` and all `@sigx/*` core packages — across their dependency tree. Package managers that enforce peer ranges (e.g. pnpm with its default `strict-peer-dependencies`) refuse to install an out-of-range core; others surface it as a peer-dependency warning.
