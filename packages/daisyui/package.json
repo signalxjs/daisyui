@@ -76,20 +76,20 @@
         "url": "https://github.com/signalxjs/daisyui/issues"
     },
     "peerDependencies": {
-        "sigx": ">=0.10.0 <0.11.0",
-        "@sigx/reactivity": ">=0.10.0 <0.11.0",
-        "@sigx/runtime-core": ">=0.10.0 <0.11.0",
-        "@sigx/runtime-dom": ">=0.10.0 <0.11.0",
+        "sigx": "catalog:",
+        "@sigx/reactivity": "catalog:",
+        "@sigx/runtime-core": "catalog:",
+        "@sigx/runtime-dom": "catalog:",
         "daisyui": ">=5.0.0",
         "tailwindcss": ">=4.0.0"
     },
     "devDependencies": {
-        "@sigx/reactivity": "^0.10.0",
-        "@sigx/runtime-core": "^0.10.0",
-        "@sigx/runtime-dom": "^0.10.0",
-        "@sigx/vite": "^0.10.0",
+        "@sigx/reactivity": "catalog:",
+        "@sigx/runtime-core": "catalog:",
+        "@sigx/runtime-dom": "catalog:",
+        "@sigx/vite": "catalog:",
         "happy-dom": "^20.0.11",
-        "sigx": "^0.10.0",
+        "sigx": "catalog:",
         "typescript": "^6.0.3",
         "vite": "^8.0.3",
         "vitest": "^4.1.1"
