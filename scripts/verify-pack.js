@@ -24,6 +24,7 @@
 
 import { execSync } from 'child_process';
 import { mkdirSync, readFileSync, rmSync, writeFileSync, readdirSync } from 'fs';
+import { gunzipSync } from 'zlib';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { tmpdir } from 'os';
@@ -52,6 +53,39 @@ function readJson(path) {
     return JSON.parse(readFileSync(path, 'utf-8'));
 }
 
+// Extract a single file's text from a gzipped npm tarball using only Node
+// built-ins (no `tar`/`yaml` dep, cross-platform). npm/pnpm tarballs store
+// entries under `package/`; ustar headers are 512-byte blocks with the name in
+// bytes 0..100 and the octal size in bytes 124..136. Entry names here are short
+// (`package/package.json`), so no GNU/PAX long-name handling is needed.
+function readFileFromTarball(tarballPath, wantName) {
+    const buf = gunzipSync(readFileSync(tarballPath));
+    for (let offset = 0; offset + 512 <= buf.length; ) {
+        const name = buf.subarray(offset, offset + 100).toString('utf-8').replace(/\0.*$/s, '');
+        if (name === '') break; // end-of-archive zero blocks
+        // Octal size field (bytes 124..136). Fail fast on a malformed header
+        // rather than defaulting to 0 and silently desynchronizing the scan.
+        const rawSize = buf.subarray(offset + 124, offset + 136).toString('utf-8').replace(/\0.*$/s, '').trim();
+        const size = parseInt(rawSize, 8);
+        if (!Number.isSafeInteger(size) || size < 0) {
+            throw new Error(
+                `Malformed tar header for "${name}" in ${tarballPath}: unparseable size field ${JSON.stringify(rawSize)}`
+            );
+        }
+        offset += 512;
+        if (offset + size > buf.length) {
+            throw new Error(
+                `Malformed tar entry "${name}" in ${tarballPath}: payload (${size} bytes) runs past end of archive`
+            );
+        }
+        if (name === wantName) {
+            return buf.subarray(offset, offset + size).toString('utf-8');
+        }
+        offset += Math.ceil(size / 512) * 512;
+    }
+    throw new Error(`${wantName} not found in ${tarballPath}`);
+}
+
 function packPackage(pkgPath) {
     const pkgFullPath = join(rootDir, pkgPath);
     const pkgJson = readJson(join(pkgFullPath, 'package.json'));
@@ -62,7 +96,14 @@ function packPackage(pkgPath) {
     if (!match) {
         throw new Error(`Could not find tarball for ${pkgJson.name} in ${tarballDir}`);
     }
-    return { name: pkgJson.name, version: pkgJson.version, tarball: join(tarballDir, match) };
+    const tarball = join(tarballDir, match);
+    // Read the PUBLISHED manifest from inside the tarball, not the source
+    // package.json: `pnpm pack` rewrites workspace `catalog:` specifiers to
+    // their concrete ranges (e.g. `^0.12.0`), and that resolved form is what a
+    // consumer actually installs. Reading source would leak the literal
+    // `catalog:` protocol, which npm cannot resolve (EUNSUPPORTEDPROTOCOL).
+    const publishedManifest = JSON.parse(readFileFromTarball(tarball, 'package/package.json'));
+    return { name: pkgJson.name, version: pkgJson.version, tarball, publishedManifest };
 }
 
 function main() {
@@ -81,19 +122,25 @@ function main() {
 
     step('Create scratch app');
     const rootPkg = readJson(join(rootDir, 'package.json'));
-    const daisyuiPkg = readJson(join(rootDir, 'packages/daisyui/package.json'));
+    const daisyui = packed.find((p) => p.name === '@sigx/daisyui');
+    if (!daisyui) {
+        throw new Error("Expected '@sigx/daisyui' among the packed packages, but it was not found");
+    }
+    // The peer deps daisyui & tailwindcss aren't needed for typechecking, but
+    // sigx and the @sigx/* core peers must resolve — the scratch app plays the
+    // consumer, so it installs them itself. Take the ranges from the PUBLISHED
+    // manifest (catalog: already rewritten to ^0.12.0) so npm sees a consistent
+    // graph; reading the source package.json would leak the literal `catalog:`
+    // protocol, which npm can't resolve (EUNSUPPORTEDPROTOCOL).
+    const peers = daisyui.publishedManifest.peerDependencies;
     const deps = {
         ...Object.fromEntries(
             packed.map((p) => [p.name, `file:${p.tarball.replace(/\\/g, '/')}`])
         ),
-        // The peer deps daisyui & tailwindcss aren't needed for typechecking,
-        // but sigx and the @sigx/* core peers must resolve — the scratch app
-        // plays the consumer, so it installs them itself. Use the same ranges
-        // that @sigx/daisyui declares so npm sees a consistent graph.
-        sigx: daisyuiPkg.peerDependencies.sigx,
-        '@sigx/reactivity': daisyuiPkg.peerDependencies['@sigx/reactivity'],
-        '@sigx/runtime-core': daisyuiPkg.peerDependencies['@sigx/runtime-core'],
-        '@sigx/runtime-dom': daisyuiPkg.peerDependencies['@sigx/runtime-dom'],
+        sigx: peers.sigx,
+        '@sigx/reactivity': peers['@sigx/reactivity'],
+        '@sigx/runtime-core': peers['@sigx/runtime-core'],
+        '@sigx/runtime-dom': peers['@sigx/runtime-dom'],
     };
     const appPkg = {
         name: 'sigx-daisyui-pack-smoke',
