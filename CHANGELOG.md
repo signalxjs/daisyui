@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-07-29
+
+### Changed
+
+- **BREAKING (packaging):** Retargeted the SignalX core peer range to the `0.14.x` line: the `sigx`, `@sigx/reactivity`, `@sigx/runtime-core` and `@sigx/runtime-dom` peers move from `>=0.13.0 <0.14.0` to `>=0.14.0 <0.15.0` (dev/build deps — including `@sigx/vite` — bumped to `^0.14.0` to match). Consumers must now be on the SignalX core `0.14.x` line — `sigx` and all `@sigx/*` core packages — across their dependency tree. Package managers that enforce peer ranges (e.g. pnpm with its default `strict-peer-dependencies`) refuse to install an out-of-range core; others surface it as a peer-dependency warning.
+
+  `@sigx/daisyui`'s own API is unchanged and it needs no code changes to run on core 0.14 — `build`, `typecheck` and `test` (534 tests) passed on the first run. Two core 0.14 changes are worth reading before upgrading an app, though, because both touch component authoring. A reactive object's **key set** is now a dependency, so enumerating reactive state inside an effect or computed re-runs the reader when a key appears or disappears. And **host attributes on a component are now an opt-in**: `JSX.IntrinsicAttributes` carries only `key`, so a component that forwards its leftover props onto an element must declare `& Define.Attrs` to accept `id`/`class`/`style` and friends. The single-minor pin lives in the `catalog:` block of `pnpm-workspace.yaml`, which `pnpm pack` rewrites to the concrete `^0.14.0` range in the published manifest. See the [SignalX changelog](https://github.com/signalxjs/core/blob/main/CHANGELOG.md) for the full history.
+
 ## [0.10.0] - 2026-07-23
 
 ### Changed
@@ -86,7 +94,8 @@ Initial release of `@sigx/daisyui` from the dedicated [`signalxjs/daisyui`](http
 - `@sigx/reactivity`, `@sigx/runtime-core`, `@sigx/runtime-dom` and `sigx` are now consumed from npm (`^0.4.0`) instead of via workspace links.
 - Version aligned with the rest of the SignalX ecosystem (`0.4.x`).
 
-[Unreleased]: https://github.com/signalxjs/daisyui/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/signalxjs/daisyui/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/signalxjs/daisyui/releases/tag/v0.11.0
 [0.10.0]: https://github.com/signalxjs/daisyui/releases/tag/v0.10.0
 [0.9.0]: https://github.com/signalxjs/daisyui/releases/tag/v0.9.0
 [0.8.0]: https://github.com/signalxjs/daisyui/releases/tag/v0.8.0
