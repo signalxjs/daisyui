@@ -94,7 +94,8 @@ Initial release of `@sigx/daisyui` from the dedicated [`signalxjs/daisyui`](http
 - `@sigx/reactivity`, `@sigx/runtime-core`, `@sigx/runtime-dom` and `sigx` are now consumed from npm (`^0.4.0`) instead of via workspace links.
 - Version aligned with the rest of the SignalX ecosystem (`0.4.x`).
 
-[Unreleased]: https://github.com/signalxjs/daisyui/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/signalxjs/daisyui/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/signalxjs/daisyui/releases/tag/v0.11.0
 [0.10.0]: https://github.com/signalxjs/daisyui/releases/tag/v0.10.0
 [0.9.0]: https://github.com/signalxjs/daisyui/releases/tag/v0.9.0
 [0.8.0]: https://github.com/signalxjs/daisyui/releases/tag/v0.8.0
