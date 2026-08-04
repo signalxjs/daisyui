@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.12.1] - 2026-08-04
+
+### Changed
+
+- Verified against SignalX core **0.15.1** (patch): the repo's lockfile now resolves the core 0.15.1 patch and the full suite (build, typecheck, 539 tests) passes against it. The published package is otherwise identical to 0.12.0 — the peer/dev ranges stay on the `0.15.x` line (`^0.15.0`), which already admits 0.15.1, and no source file changed.
+
 ## [0.12.0] - 2026-08-04
 
 ### Changed
@@ -101,7 +107,8 @@ Initial release of `@sigx/daisyui` from the dedicated [`signalxjs/daisyui`](http
 - `@sigx/reactivity`, `@sigx/runtime-core`, `@sigx/runtime-dom` and `sigx` are now consumed from npm (`^0.4.0`) instead of via workspace links.
 - Version aligned with the rest of the SignalX ecosystem (`0.4.x`).
 
-[Unreleased]: https://github.com/signalxjs/daisyui/compare/v0.12.0...HEAD
+[Unreleased]: https://github.com/signalxjs/daisyui/compare/v0.12.1...HEAD
+[0.12.1]: https://github.com/signalxjs/daisyui/releases/tag/v0.12.1
 [0.12.0]: https://github.com/signalxjs/daisyui/releases/tag/v0.12.0
 [0.11.0]: https://github.com/signalxjs/daisyui/releases/tag/v0.11.0
 [0.10.0]: https://github.com/signalxjs/daisyui/releases/tag/v0.10.0
