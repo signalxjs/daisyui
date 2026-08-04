@@ -131,7 +131,14 @@ const _ThemeConfigurator = component<ThemeConfiguratorProps>(({ props, slots, em
 
         // If user provides slot content, render that (custom layout)
         const slotContent = slots.default?.();
-        if (slotContent && slotContent.length > 0) {
+        // Core 0.15 widened slot returns to JSXElement | JSXElement[] | null —
+        // a lone VNode/string/number is content too, not just a non-empty array.
+        // Empty arrays, empty strings, booleans and null/undefined are "no
+        // content" (JSX renders none of them); numeric 0 IS content.
+        const hasSlotContent = Array.isArray(slotContent)
+            ? slotContent.length > 0
+            : slotContent != null && typeof slotContent !== 'boolean' && slotContent !== '';
+        if (hasSlotContent) {
             return (
                 <div class={`theme-configurator ${props.class ?? ''}`}>
                     {slotContent}
