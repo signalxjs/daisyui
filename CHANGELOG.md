@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-08-04
+
 ### Changed
 
 - **BREAKING (packaging):** Retargeted the SignalX core peer range to the `0.15.x` line: the `sigx`, `@sigx/reactivity`, `@sigx/runtime-core` and `@sigx/runtime-dom` peers move from `>=0.14.0 <0.15.0` to `>=0.15.0 <0.16.0` (dev/build deps — including `@sigx/vite` — bumped to `^0.15.0` to match). Consumers must now be on the SignalX core `0.15.x` line — `sigx` and all `@sigx/*` core packages — across their dependency tree. Package managers that enforce peer ranges (e.g. pnpm with its default `strict-peer-dependencies`) refuse to install an out-of-range core; others surface it as a peer-dependency warning. The single-minor pin lives in the `catalog:` block of `pnpm-workspace.yaml`, which `pnpm pack` rewrites to the concrete `^0.15.0` range in the published manifest. See the [SignalX changelog](https://github.com/signalxjs/core/blob/main/CHANGELOG.md) for the full history.
@@ -99,7 +101,8 @@ Initial release of `@sigx/daisyui` from the dedicated [`signalxjs/daisyui`](http
 - `@sigx/reactivity`, `@sigx/runtime-core`, `@sigx/runtime-dom` and `sigx` are now consumed from npm (`^0.4.0`) instead of via workspace links.
 - Version aligned with the rest of the SignalX ecosystem (`0.4.x`).
 
-[Unreleased]: https://github.com/signalxjs/daisyui/compare/v0.11.0...HEAD
+[Unreleased]: https://github.com/signalxjs/daisyui/compare/v0.12.0...HEAD
+[0.12.0]: https://github.com/signalxjs/daisyui/releases/tag/v0.12.0
 [0.11.0]: https://github.com/signalxjs/daisyui/releases/tag/v0.11.0
 [0.10.0]: https://github.com/signalxjs/daisyui/releases/tag/v0.10.0
 [0.9.0]: https://github.com/signalxjs/daisyui/releases/tag/v0.9.0
