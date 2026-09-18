@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-09-18
+
+### Changed
+
+- **BREAKING (packaging):** Retargeted the SignalX core peer range to the **1.0** line: the `sigx`, `@sigx/reactivity`, `@sigx/runtime-core` and `@sigx/runtime-dom` peers move from `>=0.15.0 <0.16.0` to `^1.0.0` (`>=1.0.0 <2.0.0`), and the dev/build deps — including `@sigx/vite` — move to `^1.0.0` to match. Consumers must now be on SignalX core `1.x` — `sigx` and all `@sigx/*` core packages — across their dependency tree. Package managers that enforce peer ranges (e.g. pnpm with its default `strict-peer-dependencies`) refuse to install an out-of-range core; others surface it as a peer-dependency warning.
+
+  The range is deliberately a single **major** rather than a single minor from here on: core 1.0 is the stability contract (breaking changes only at a major, minors additive), so a library peers on core at `^X.0.0` and the app that installs it owns the single copy of `@sigx/reactivity` / `@sigx/runtime-core` — a second copy is now named at runtime by core itself. The pin still lives in the `catalog:` block of `pnpm-workspace.yaml`, which `pnpm pack` rewrites to the concrete `^1.0.0` range in the published manifest.
+
+  `@sigx/daisyui`'s own API is unchanged and it needs no code changes to run on core 1.0.0 — `build`, `typecheck` and `test` (539 tests) passed on the first run against it, and no source file changed. See the [SignalX changelog](https://github.com/signalxjs/core/blob/main/CHANGELOG.md) and its `docs/migrations/1.0-serverfn.md` for the core-side changes an app upgrading from 0.15 may hit.
+
 ## [0.12.1] - 2026-08-04
 
 ### Changed
@@ -107,7 +117,8 @@ Initial release of `@sigx/daisyui` from the dedicated [`signalxjs/daisyui`](http
 - `@sigx/reactivity`, `@sigx/runtime-core`, `@sigx/runtime-dom` and `sigx` are now consumed from npm (`^0.4.0`) instead of via workspace links.
 - Version aligned with the rest of the SignalX ecosystem (`0.4.x`).
 
-[Unreleased]: https://github.com/signalxjs/daisyui/compare/v0.12.1...HEAD
+[Unreleased]: https://github.com/signalxjs/daisyui/compare/v0.13.0...HEAD
+[0.13.0]: https://github.com/signalxjs/daisyui/releases/tag/v0.13.0
 [0.12.1]: https://github.com/signalxjs/daisyui/releases/tag/v0.12.1
 [0.12.0]: https://github.com/signalxjs/daisyui/releases/tag/v0.12.0
 [0.11.0]: https://github.com/signalxjs/daisyui/releases/tag/v0.11.0
